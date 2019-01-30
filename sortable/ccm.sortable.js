@@ -1,0 +1,95 @@
+/**
+ * @overview example ccm component that renders sortable list
+ * @author Minh Nguyen <minh.nguyen@web.de> 2019
+ * @license The MIT License (MIT)
+ */
+( function () {
+
+  const component = {
+
+    name: 'sortable',
+
+    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
+
+    config: {
+      'css': [
+        'ccm.load',
+        { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css' },
+        { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ],
+
+      'js': [ 'ccm.load',
+        { url: 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js', type: 'js' },
+        {
+          url: 'https://code.jquery.com/jquery-3.3.1.slim.min.js', type: 'js', context: 'head',
+          attr: { integrity: 'sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo', crossorigin: 'anonymous' }
+        },
+      ],
+
+      'data': { 'store': [ 'ccm.store' ] },
+
+      'html': {
+        'main': [
+          { 'id': 'items' }
+        ]
+      },
+
+      'ranking': {}
+    },
+
+    Instance: function () {
+
+      let $;
+      let dataset;
+
+      this.ready = async () => {
+        // set shortcut to help functions
+        $ = this.ccm.helper;
+
+        // logging of 'ready' event
+        this.logger && this.logger.log( 'ready', $.privatize( this, true ) );
+      };
+
+      this.start = async () => {
+        // has logger instance? => log 'start' event
+        this.logger && this.logger.log( 'start', $.clone( dataset ) );
+
+        // render main HTML structure
+        $.setContent( this.element, $.html( this.html.main ) );
+
+        // contain list items
+        const items_elem = this.element.querySelector( '#items' );
+
+        // get dataset for rendering
+        const self = this; dataset = await $.dataset( this.data );
+
+        // render list items
+        const ul_elem = document.createElement('ul');
+        ul_elem.classList.add('list-group');
+        ul_elem.id = dataset.id;
+        items_elem.appendChild(ul_elem);
+        dataset.items && dataset.items.forEach( renderListItem );
+        Sortable.create(ul_elem, {
+          onSort: function (event) {
+            let tmp = self.ranking[event.newIndex];
+            self.ranking[event.newIndex] = self.ranking[event.oldIndex];
+            self.ranking[event.oldIndex] = tmp;
+          }
+        });
+
+        function renderListItem( item_data, i ) {
+          const li_elem = document.createElement('li');
+          li_elem.innerHTML = item_data.content;
+          li_elem.id = item_data.id;
+          li_elem.classList.add('list-group-item','ui-state-default');
+          ul_elem.appendChild(li_elem);
+          self.ranking[i] = li_elem.id;
+        }
+      };
+
+      this.getRanking = () => { return this.ranking; }
+    }
+  };
+
+  let b="ccm."+component.name+(component.version?"-"+component.version.join("."):"")+".js";if(window.ccm&&null===window.ccm.files[b])return window.ccm.files[b]=component;(b=window.ccm&&window.ccm.components[component.name])&&b.ccm&&(component.ccm=b.ccm);"string"===typeof component.ccm&&(component.ccm={url:component.ccm});let c=(component.ccm.url.match(/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)||["latest"])[0];if(window.ccm&&window.ccm[c])window.ccm[c].component(component);else{var a=document.createElement("script");document.head.appendChild(a);component.ccm.integrity&&a.setAttribute("integrity",component.ccm.integrity);component.ccm.crossorigin&&a.setAttribute("crossorigin",component.ccm.crossorigin);a.onload=function(){window.ccm[c].component(component);document.head.removeChild(a)};a.src=component.ccm.url}
+} )();
