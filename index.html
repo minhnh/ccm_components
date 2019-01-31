@@ -8,8 +8,23 @@ Repository for building <a href="https://github.com/ccmjs">CCM</a> components fo
 <a href="https://digiklausur.github.io/">E-assessment</a> project.
 
 <h3>Components</h3>
-<ul>
+<table width="100%">
+    <colgroup>
+        <col width="30%" />
+        <col width="70%" />
+    </colgroup>
+    <thead>
+    <tr class="header">
+        <th>Name</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
     {% for component in site.data.components %}
-    <li><a href="{{ component.name }}/">{{ component.description }}</a></li>
+    <tr>
+        <td><a href="{{ component.path }}/">{{ component.name }}</a></td>
+        <td>{{ component.description }}</td>
+    </tr>
     {% endfor %}
-</ul>
+    </tbody>
+</table>

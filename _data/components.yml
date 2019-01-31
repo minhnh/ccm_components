@@ -1,8 +1,11 @@
-- name: sortable
+- name: ccm.sortable.js
+  path: sortable
   description: List with sortable items
 
-- name: answer_ranking
+- name: ccm.answer_ranking.js
+  path: answer_ranking
   description: Rank answers for a question
 
-- name: course_demo
+- name: ccm.course_demo.js
+  path: course_demo
   description: Demo page for class organization
