@@ -49,7 +49,7 @@ ccm.files[ 'dataset.js' ] = {
     'entries': [
       {
         'title': '<span class="fa fa-pencil-square-o"></span>Test Entry 3',
-        'content': [ 'ccm.instance', 'https://ccmjs.github.io/akless-components/cloze/versions/ccm.cloze-5.0.0.js', {
+        'content': [ 'ccm.instance', 'https://ccmjs.github.io/akless-components/cloze/versions/ccm.cloze-5.0.3.js', {
           'key': [ 'ccm.get', { 'store': 'w2c_cloze', 'url': 'https://ccm2.inf.h-brs.de' }, '1518692231862X6906233038090239' ],
           'data': {
             'store': [ 'ccm.store', { 'store': 'be2_ws18_cloze_results', 'url': 'https://ccm2.inf.h-brs.de', 'method': 'POST' } ],
