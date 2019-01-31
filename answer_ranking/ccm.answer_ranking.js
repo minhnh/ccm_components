@@ -8,7 +8,7 @@
 
   const component = {
 
-    name: 'question_answers',
+    name: 'answer_ranking',
 
     ccm: 'https://ccmjs.github.io/ccm/ccm.js',
 
