@@ -9,7 +9,7 @@ Repository for building <a href="https://github.com/ccmjs">CCM</a> components fo
 
 <h3>Components</h3>
 <ul>
-    <li><a href="sortable/">Sortable</a></li>
-    <li><a href="question_answers/">Sortable answers for a question</a></li>
-    <li><a href="course_demo/">Demo page for class organization</a></li>
+    {% for component in site.data.components %}
+    <li><a href="{{ component.name }}/">{{ component.description }}</a></li>
+    {% endfor %}
 </ul>

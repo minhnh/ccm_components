@@ -1,0 +1,8 @@
+- name: sortable
+  description: List with sortable items
+
+- name: answer_ranking
+  description: Rank answers for a question
+
+- name: course_demo
+  description: Demo page for class organization
