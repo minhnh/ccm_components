@@ -1,6 +1,6 @@
 /**
  * @overview example ccm component that renders sortable list
- * @author Minh Nguyen <minh.nguyen@web.de> 2019
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de> 2019
  * @license The MIT License (MIT)
  */
 ( function () {

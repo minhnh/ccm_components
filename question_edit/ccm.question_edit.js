@@ -1,6 +1,6 @@
 /**
- * @overview example ccm component that just renders "Hello, World!"
- * @author André Kless <andre.kless@web.de> 2017-2018
+ * @overview example ccm component that add question entries to a database
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de> 2019
  * @license The MIT License (MIT)
  */
 
@@ -12,11 +12,86 @@
 
     ccm: 'https://ccmjs.github.io/ccm/ccm.js',
 
+    config: {
+      'user': [
+        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-8.3.1.js',
+        [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
+      ],
+
+      'comp_input': [ 'ccm.component', 'https://ccmjs.github.io/akless-components/input/versions/ccm.input-1.0.0.js' ],
+
+      "data": { "store": [ "ccm.store" ] },
+
+      "html": {
+        'main': [
+          { 'id': 'questions' },
+          { 'id': 'add_question' },
+          { 'id': 'save' }
+        ]
+      }
+    },
+
     Instance: function () {
 
-      this.start = async () => {
+      let $;
 
-        this.element.innerHTML = 'Hello, World!';
+      this.ready = async () => {
+        // set shortcut to help functions
+        $ = this.ccm.helper;
+
+        // logging of 'ready' event
+        this.logger && this.logger.log( 'ready', $.privatize( this, true ) );
+      };
+
+      this.start = async () => {
+        // get dataset for rendering
+        const self = this;
+        this.data['user'] = !!this.user;
+        const dataset = await $.dataset( this.data );
+
+        // has logger instance? => log 'start' event
+        this.logger && this.logger.log( 'start', $.clone( dataset ) );
+
+        // render main HTML structure
+        $.setContent( this.element, $.html( this.html.main ) );
+
+        // get page fragments
+        const questions_elem = this.element.querySelector( '#questions' );
+        const add_question_elem = this.element.querySelector( '#add_question' );
+        const save_elem = this.element.querySelector( '#save' );
+
+        let lastQuestionNum = 0;
+        let inputs = [];
+        let initials = {};
+        dataset["question_ids"].forEach((questionId) => {
+
+          // keep track of the highest question number
+          const question = dataset[questionId];
+          const questionNumMatch = questionId.match(/q_(\d+)/);
+          const questionNum = questionNumMatch ? parseInt(questionNumMatch[1]) : 0;
+          if (questionNum > lastQuestionNum) {
+            lastQuestionNum = questionNum;
+          }
+
+          // fill questions for the input component
+          inputs.push({
+            "label": "Question " + questionNum,
+            "name": questionId,
+            "input": "text"
+          });
+
+          initials[questionId] = question.text;
+
+          //self.data.store.set({'key': 'task_1', 'q_2': { 'text': 'question 2', 'answers': [], 'user': 'mnguy12s' }})
+        });
+
+        await this.comp_input.start({
+          root: questions_elem,
+          "form": true,
+          "button": true,
+          "inputs": inputs,
+          "initial": initials
+        });
 
       };
 
