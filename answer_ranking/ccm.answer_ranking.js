@@ -1,6 +1,7 @@
 /**
- * @overview example ccm component that just renders "Hello, World!"
- * @author André Kless <andre.kless@web.de> 2017-2018
+ * @overview CCM component to rank student answers for a question
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de>
+ * @copyright 2019
  * @license The MIT License (MIT)
  */
 

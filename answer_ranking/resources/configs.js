@@ -1,9 +1,8 @@
 /**
- * @overview configurations of ccm component for rendering a predefined content
- * @author André Kless <andre.kless@web.de> 2017
+ * @overview configurations of ccm component for ranking answers to a question
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de> 2019
  * @license The MIT License (MIT)
  */
-
 ccm.files[ 'configs.js' ] = {
   "demo": {
     "key": "demo",

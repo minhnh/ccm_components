@@ -14,4 +14,12 @@ ccm.files[ 'configs.js' ] = {
             "key": "task_1"
         }
     },
+
+    "local": {
+        "key": "localhost",
+        "data": {
+            "store": [ 'ccm.store', '../resources/dataset.js' ] ,
+            "key": "task_1"
+        }
+    }
 };
