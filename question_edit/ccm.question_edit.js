@@ -18,9 +18,14 @@
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 
-      'comp_input': [ 'ccm.component', 'https://ccmjs.github.io/akless-components/input/versions/ccm.input-1.0.0.js' ],
-
       "data": { "store": [ "ccm.store" ] },
+
+      // $question_id$ and $question_text$ will be replaced with according values for each question
+      "question_html": "<div class=\"input-group-prepend\">\n" +
+          "  <span class=\"input-group-text\" id=\"$question_id$_label\">Question</span>\n" +
+          "</div>\n" +
+          "<input type=\"text\" name=\"$question_id$\" class=\"form-control\" aria-label=\"Question\"\n" +
+          "       aria-describedby=\"$question_id$_label\" value=\"$question_text$\">",
 
       "html": {
         'main': [
@@ -28,7 +33,17 @@
           { 'id': 'add_question' },
           { 'id': 'save' }
         ]
-      }
+      },
+
+      'css': [
+        'ccm.load', {
+          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css',
+          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
+        }, {
+          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head',
+          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
+        }
+      ],
     },
 
     Instance: function () {
@@ -56,47 +71,43 @@
         $.setContent( this.element, $.html( this.html.main ) );
 
         // get page fragments
-        const questions_elem = this.element.querySelector( '#questions' );
-        const add_question_elem = this.element.querySelector( '#add_question' );
-        const save_elem = this.element.querySelector( '#save' );
+        const questionsElem = this.element.querySelector( '#questions' );
+        const addQuestionElem = this.element.querySelector( '#add_question' );
+        const saveElem = this.element.querySelector( '#save' );
 
-        let lastQuestionNum = 0;
-        let inputs = [];
-        let initials = {};
-        dataset["question_ids"].forEach((questionId) => {
+        await renderQuestions();
 
-          // keep track of the highest question number
-          const question = dataset[questionId];
-          const questionNumMatch = questionId.match(/q_(\d+)/);
-          const questionNum = questionNumMatch ? parseInt(questionNumMatch[1]) : 0;
-          if (questionNum > lastQuestionNum) {
-            lastQuestionNum = questionNum;
-          }
+        const saveButton = document.createElement('button');
+        saveElem.appendChild(saveButton);
+        saveButton.setAttribute('type', 'button');
+        saveButton.className = "btn btn-info";
+        saveButton.innerText = 'Save';
+        saveButton.addEventListener('click', (event) => {
+          console.log(self.ccm.helper.formData(questionsElem));
+        });
 
-          // fill questions for the input component
-          inputs.push({
-            "label": "Question " + questionNum,
-            "name": questionId,
-            "input": "text"
+        //self.data.store.set({'key': 'task_1', 'q_2': { 'text': 'question 2', 'answers': [], 'user': 'mnguy12s' }})
+
+        console.log(dataset["question_ids"].length);
+        async function renderQuestions() {
+          dataset["question_ids"].forEach((questionId) => {
+            const question = dataset[questionId];
+            questionsElem.appendChild(renderQuestionDiv(questionId, question.text));
           });
+        }
 
-          initials[questionId] = question.text;
+        function renderQuestionDiv(questionId, questionText) {
+          const questionDiv = document.createElement('div');
+          questionDiv.className = "input-group mb-3";
+          questionDiv.innerHTML = self.question_html;
 
-          //self.data.store.set({'key': 'task_1', 'q_2': { 'text': 'question 2', 'answers': [], 'user': 'mnguy12s' }})
-        });
+          questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_id\$/g, questionId);
+          questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_text\$/g, questionText);
 
-        await this.comp_input.start({
-          root: questions_elem,
-          "form": true,
-          "button": true,
-          "inputs": inputs,
-          "initial": initials
-        });
-
+          return questionDiv;
+        }
       };
-
     }
-
   };
 
   let b="ccm."+component.name+(component.version?"-"+component.version.join("."):"")+".js";if(window.ccm&&null===window.ccm.files[b])return window.ccm.files[b]=component;(b=window.ccm&&window.ccm.components[component.name])&&b.ccm&&(component.ccm=b.ccm);"string"===typeof component.ccm&&(component.ccm={url:component.ccm});let c=(component.ccm.url.match(/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)||["latest"])[0];if(window.ccm&&window.ccm[c])window.ccm[c].component(component);else{var a=document.createElement("script");document.head.appendChild(a);component.ccm.integrity&&a.setAttribute("integrity",component.ccm.integrity);component.ccm.crossorigin&&a.setAttribute("crossorigin",component.ccm.crossorigin);a.onload=function(){window.ccm[c].component(component);document.head.removeChild(a)};a.src=component.ccm.url}
