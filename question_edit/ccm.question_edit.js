@@ -93,11 +93,16 @@
         saveButton.setAttribute('type', 'button');
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
-        saveButton.addEventListener('click', (event) => {
-          console.log(self.ccm.helper.formData(questionsElem));
+        saveButton.addEventListener('click', async () => {
+          await self.data.store.set({ key: dataset.key, 'question_ids': dataset['question_ids'] });
+          dataset['question_ids'].forEach(async (questionId) => {
+            // TODO: confirm answers are stored?
+            const writeData = { key: dataset.key };
+            writeData[questionId] = dataset[questionId];
+            await self.data.store.set(writeData);
+          });
+          await renderQuestions();
         });
-
-        //self.data.store.set({'key': 'task_1', 'q_2': { 'text': 'question 2', 'answers': [], 'user': 'mnguy12s' }})
 
         async function renderQuestions() {
           questionsElem.innerHTML = '';
@@ -155,17 +160,19 @@
           return questionDiv;
         }
 
+        // ensure the question ids are correct
         function reindexQuestions() {
           let questionNum = 1;
           let newData = { 'key': dataset.key, 'updated_at': dataset.updated_at, 'question_ids': [] };
           Object.keys(dataset).sort().forEach( key => {
+            // skipping metadata
             if (!key.match(/q_\d+/)) {
               delete dataset[key];
               return;
             }
 
+            // copying questions to new object
             const questionId = 'q_' + questionNum;
-
             newData[questionId] = dataset[key];
             newData['question_ids'].push(questionId);
             delete dataset[key];
