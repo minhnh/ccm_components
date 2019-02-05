@@ -6,6 +6,14 @@
   path: answer_ranking
   description: Rank answers for a question
 
+- name: ccm.question_edit.js
+  path: question_edit
+  description: View for adding questions
+
+- name: ccm.answer_edit.js
+  path: answer_edit
+  description: View for answering questions
+
 - name: ccm.course_demo.js
   path: course_demo
   description: Demo page for class organization

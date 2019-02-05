@@ -1,6 +1,7 @@
 /**
  * @overview TODO
- * @author Minh Nguyen <minh.nguyen@web.de> 2018
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de>
+ * @copyright 2019
  * @license The MIT License (MIT)
  */
 ccm.files[ 'dataset.js' ] = {
@@ -84,5 +85,4 @@ ccm.files[ 'dataset.js' ] = {
       }
     ]
   }
-
 };
