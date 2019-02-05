@@ -21,16 +21,19 @@
       "data": { "store": [ "ccm.store" ] },
 
       // $question_id$ and $question_text$ will be replaced with according values for each question
+      // id $question_id$_button will be used for handling remove event
       "question_html": "<div class=\"input-group-prepend\">\n" +
           "  <span class=\"input-group-text\" id=\"$question_id$_label\">Question</span>\n" +
           "</div>\n" +
           "<input type=\"text\" name=\"$question_id$\" class=\"form-control\" aria-label=\"Question\"\n" +
-          "       aria-describedby=\"$question_id$_label\" value=\"$question_text$\">",
+          "       aria-describedby=\"$question_id$_label\" value=\"$question_text$\">\n" +
+          "<div class=\"input-group-append\">\n" +
+          "  <button class=\"btn btn-link\" type=\"button\" id=\"$question_id$_button\">Remove</button>\n" +
+          "</div>",
 
       "html": {
         'main': [
           { 'id': 'questions' },
-          { 'id': 'add_question' },
           { 'id': 'save' }
         ]
       },
@@ -61,22 +64,30 @@
       this.start = async () => {
         // get dataset for rendering
         const self = this;
-        this.data['user'] = !!this.user;
-        const dataset = await $.dataset( this.data );
+        let username;
+        // this.data['user'] = !!self.user;
+
+        // login
+        self.user && await self.user.login().then ( () => {
+          username = self.user.data().user;
+        } ).catch((exception) => console.log('login: ' + exception.error));
+
+        let dataset = await $.dataset( this.data );
 
         // has logger instance? => log 'start' event
         this.logger && this.logger.log( 'start', $.clone( dataset ) );
+        const origData = $.clone(dataset);
 
         // render main HTML structure
         $.setContent( this.element, $.html( this.html.main ) );
 
         // get page fragments
         const questionsElem = this.element.querySelector( '#questions' );
-        const addQuestionElem = this.element.querySelector( '#add_question' );
         const saveElem = this.element.querySelector( '#save' );
 
         await renderQuestions();
 
+        // render save button
         const saveButton = document.createElement('button');
         saveElem.appendChild(saveButton);
         saveButton.setAttribute('type', 'button');
@@ -88,12 +99,33 @@
 
         //self.data.store.set({'key': 'task_1', 'q_2': { 'text': 'question 2', 'answers': [], 'user': 'mnguy12s' }})
 
-        console.log(dataset["question_ids"].length);
         async function renderQuestions() {
+          questionsElem.innerHTML = '';
           dataset["question_ids"].forEach((questionId) => {
             const question = dataset[questionId];
-            questionsElem.appendChild(renderQuestionDiv(questionId, question.text));
+            questionsElem.appendChild(renderQuestionDiv(questionId, question ? question.text : ''));
           });
+
+          // render add question button/link
+          const answerButton = document.createElement('button');
+          answerButton.className = 'btn btn-link';
+          answerButton.setAttribute('type', 'button');
+          answerButton.innerText = 'Add New Question';
+          answerButton.addEventListener('click', async () => {
+            const newQuestionId = 'q_' + (dataset["question_ids"].length + 1);
+            if (dataset[newQuestionId]) {
+              reindexQuestions();
+            }
+
+            dataset["question_ids"].push(newQuestionId);
+            dataset[newQuestionId] = {
+              'text': '',
+              'user': username,
+              'answers': []
+            };
+            await renderQuestions();
+          });
+          questionsElem.appendChild(answerButton);
         }
 
         function renderQuestionDiv(questionId, questionText) {
@@ -104,7 +136,46 @@
           questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_id\$/g, questionId);
           questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_text\$/g, questionText);
 
+          // write text content to dataset when question field is unfocused
+          const questionInput = questionDiv.querySelector('input[name=' + questionId + ']');
+          questionInput.addEventListener('blur', (event) => {
+            const inputElem = event.srcElement;
+            dataset[questionId].text = inputElem ? inputElem.value : '';
+          });
+
+          // handle removing a question
+          const removeButton = questionDiv.querySelector('#' + questionId + '_button');
+          removeButton.addEventListener('click', async () => {
+            delete dataset[questionId];
+            reindexQuestions();
+            await renderQuestions();
+          });
+          questionDiv.appendChild(removeButton);
+
           return questionDiv;
+        }
+
+        function reindexQuestions() {
+          let questionNum = 1;
+          let newData = { 'key': dataset.key, 'updated_at': dataset.updated_at, 'question_ids': [] };
+          Object.keys(dataset).sort().forEach( key => {
+            if (!key.match(/q_\d+/)) {
+              delete dataset[key];
+              return;
+            }
+
+            const questionId = 'q_' + questionNum;
+
+            newData[questionId] = dataset[key];
+            newData['question_ids'].push(questionId);
+            delete dataset[key];
+
+            questionNum++;
+          });
+          dataset = newData;
+        }
+
+        function cleanUpOrphanedQuestions() {
         }
       };
     }
