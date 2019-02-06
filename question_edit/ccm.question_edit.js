@@ -27,7 +27,7 @@
       },
 
       // $question_id$ and $question_text$ will be replaced with according values for each question
-      // id $question_id$_button will be used for handling remove event
+      // id '$question_id$_button' will be used for handling remove event
       "question_html": "<div class=\"input-group-prepend\">\n" +
           "  <span class=\"input-group-text\" id=\"$question_id$_label\">Question</span>\n" +
           "</div>\n" +
@@ -79,8 +79,14 @@
           username = self.user.data().user;
         } ).catch((exception) => console.log('login: ' + exception.error));
 
+        if (!username) {
+          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
+              '  Please login to continue!\n' +
+              '</div>';
+          return;
+        }
+
         // has logger instance? => log 'start' event
-        // self.logger && self.logger.log( 'start', $.clone( dataset ) );
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
