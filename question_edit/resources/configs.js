@@ -10,16 +10,14 @@ ccm.files[ 'configs.js' ] = {
             "store": [ "ccm.store", {
                 "name": "question_answers_sample",
                 "url": "http://localhost:3000", "method": "POST"
-            } ],
-            "key": "task_1"
+            } ]
         }
     },
 
     "local": {
         "key": "localhost",
         "data": {
-            "store": [ 'ccm.store', '../resources/dataset.js' ] ,
-            "key": "task_1"
+            "store": [ 'ccm.store', '../resources/question_answers_data.js' ]
         }
     }
 };
