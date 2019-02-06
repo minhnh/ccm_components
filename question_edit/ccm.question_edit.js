@@ -20,14 +20,14 @@
 
       "data": { "store": [ "ccm.store" ] },
 
-      // predefined keys for the question answers collections
-      "collection_keys" : {
-        "questions": "questions",   // contain all question entries
-        "question_prefix": "q_"
+      // predefined strings
+      "constants" : {
+        "key_questions": "questions",   // key of store document containing question entries
+        "question_prefix": "q_"         // will be prepended to question indices to create element ID's
       },
 
       // $question_id$ and $question_text$ will be replaced with according values for each question
-      // id $question_id$_button will be used for handling remove event
+      // id '$question_id$_button' will be used for handling remove event
       "question_html": "<div class=\"input-group-prepend\">\n" +
           "  <span class=\"input-group-text\" id=\"$question_id$_label\">Question</span>\n" +
           "</div>\n" +
@@ -79,8 +79,14 @@
           username = self.user.data().user;
         } ).catch((exception) => console.log('login: ' + exception.error));
 
+        if (!username) {
+          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
+              '  Please login to continue!\n' +
+              '</div>';
+          return;
+        }
+
         // has logger instance? => log 'start' event
-        // self.logger && self.logger.log( 'start', $.clone( dataset ) );
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
@@ -92,10 +98,10 @@
         const saveElem = self.element.querySelector( '#save' );
 
         // load initial data from store
-        await self.data.store.get(self.collection_keys.questions).then( (questions) => {
+        await self.data.store.get(self.constants.key_questions).then( (questions) => {
           let questionIds = [];
-          questions.entries.forEach( (entry, i) => {
-            const questionId = self.collection_keys.question_prefix + i;
+          questions && questions.entries && questions.entries.forEach( (entry, i) => {
+            const questionId = self.constants.question_prefix + i;
             questionIds.push(questionId);
             questionData[questionId] = entry;
           } );
@@ -121,7 +127,7 @@
             if ( key === 'question_ids' ) return;
             entries.push(questionData[key]);
           } );
-          await self.data.store.set({ key: self.collection_keys.questions, 'entries': entries });
+          await self.data.store.set({ key: self.constants.key_questions, 'entries': entries });
           await renderQuestions();
         });
 
@@ -139,17 +145,16 @@
           answerButton.setAttribute('type', 'button');
           answerButton.innerText = 'Add New Question';
           answerButton.addEventListener('click', async () => {
-            const newQuestionId = self.collection_keys.question_prefix + (questionData["question_ids"].length + 1);
+            const newQuestionId = self.constants.question_prefix + (questionData["question_ids"].length + 1);
             if (questionData[newQuestionId]) {
               reindexQuestions();
             }
 
             questionData["question_ids"].push(newQuestionId);
             questionData[newQuestionId] = {
-              'key': newQuestionId,
               'text': '',
-              'user': username,
-              'answers': []
+              'last_modified': username,
+              'answered_by': []
             };
             await renderQuestions();
           });
@@ -195,9 +200,8 @@
             }
 
             // copying questions to new object
-            const questionId = self.collection_keys.question_prefix + questionNum;
+            const questionId = self.constants.question_prefix + questionNum;
             newData[questionId] = questionData[key];
-            newData[questionId].key = questionId;
             newData['question_ids'].push(questionId);
             delete questionData[key];
 
