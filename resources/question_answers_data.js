@@ -9,15 +9,20 @@ ccm.files[ 'question_answers_data.js' ] = {
         "key" : "questions",
         "entries" : [
             {
-                "user" : "mnguy12s",
-                "text" : "what up?",
-                "answers" : []
+                "text" : "question 1",
+                "last_modified" : "mnguy12s",
+                "answered_by" : []
             },
             {
                 "text" : "question 2",
-                "answers" : [],
-                "user" : "mnguy12s"
+                "last_modified" : "mnguy12s",
+                "answered_by" : []
             }
         ]
+    },
+
+    "mnguy12s": {
+        "answers": [],
+        "ranking": []
     }
 };
