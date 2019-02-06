@@ -94,7 +94,7 @@
         // load initial data from store
         await self.data.store.get(self.collection_keys.questions).then( (questions) => {
           let questionIds = [];
-          questions.entries.forEach( (entry, i) => {
+          questions && questions.entries && questions.entries.forEach( (entry, i) => {
             const questionId = self.collection_keys.question_prefix + i;
             questionIds.push(questionId);
             questionData[questionId] = entry;
