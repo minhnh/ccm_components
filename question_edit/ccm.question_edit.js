@@ -20,6 +20,12 @@
 
       "data": { "store": [ "ccm.store" ] },
 
+      // predefined keys for the question answers collections
+      "collection_keys" : {
+        "questions": "questions",   // contain all question entries
+        "question_prefix": "q_"
+      },
+
       // $question_id$ and $question_text$ will be replaced with according values for each question
       // id $question_id$_button will be used for handling remove event
       "question_html": "<div class=\"input-group-prepend\">\n" +
@@ -34,6 +40,7 @@
       "html": {
         'main': [
           { 'id': 'questions' },
+          { 'id': 'add_question' },
           { 'id': 'save' }
         ]
       },
@@ -64,28 +71,42 @@
       this.start = async () => {
         // get dataset for rendering
         const self = this;
-        let username;
-        // this.data['user'] = !!self.user;
+        let questionData = {};
 
         // login
+        let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
         } ).catch((exception) => console.log('login: ' + exception.error));
 
-        let dataset = await $.dataset( this.data );
-
         // has logger instance? => log 'start' event
-        this.logger && this.logger.log( 'start', $.clone( dataset ) );
-        const origData = $.clone(dataset);
+        // self.logger && self.logger.log( 'start', $.clone( dataset ) );
+        self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( this.element, $.html( this.html.main ) );
+        $.setContent( self.element, $.html( self.html.main ) );
 
         // get page fragments
-        const questionsElem = this.element.querySelector( '#questions' );
-        const saveElem = this.element.querySelector( '#save' );
+        const questionsElem = self.element.querySelector( '#questions' );
+        const addQuestionElem = self.element.querySelector( '#add_question' );
+        const saveElem = self.element.querySelector( '#save' );
 
+        // load initial data from store
+        await self.data.store.get(self.collection_keys.questions).then( (questions) => {
+          let questionIds = [];
+          questions.entries.forEach( (entry, i) => {
+            const questionId = self.collection_keys.question_prefix + i;
+            questionIds.push(questionId);
+            questionData[questionId] = entry;
+          } );
+          questionData["question_ids"] = questionIds;
+        });
+
+        // render questions
         await renderQuestions();
+
+        // render button to add new questions
+        renderAddQuestionButton();
 
         // render save button
         const saveButton = document.createElement('button');
@@ -94,43 +115,45 @@
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
         saveButton.addEventListener('click', async () => {
-          await self.data.store.set({ key: dataset.key, 'question_ids': dataset['question_ids'] });
-          dataset['question_ids'].forEach(async (questionId) => {
-            // TODO: confirm answers are stored?
-            const writeData = { key: dataset.key };
-            writeData[questionId] = dataset[questionId];
-            await self.data.store.set(writeData);
-          });
+          // TODO: confirm answers are stored?
+          let entries = [];
+          Object.keys(questionData).sort().forEach( ( key ) => {
+            if ( key === 'question_ids' ) return;
+            entries.push(questionData[key]);
+          } );
+          await self.data.store.set({ key: self.collection_keys.questions, 'entries': entries });
           await renderQuestions();
         });
 
         async function renderQuestions() {
           questionsElem.innerHTML = '';
-          dataset["question_ids"].forEach((questionId) => {
-            const question = dataset[questionId];
+          questionData["question_ids"].forEach(async (questionId) => {
+            const question = questionData[questionId];
             questionsElem.appendChild(renderQuestionDiv(questionId, question ? question.text : ''));
           });
+        }
 
-          // render add question button/link
+        function renderAddQuestionButton() {
           const answerButton = document.createElement('button');
           answerButton.className = 'btn btn-link';
           answerButton.setAttribute('type', 'button');
           answerButton.innerText = 'Add New Question';
           answerButton.addEventListener('click', async () => {
-            const newQuestionId = 'q_' + (dataset["question_ids"].length + 1);
-            if (dataset[newQuestionId]) {
+            const newQuestionId = self.collection_keys.question_prefix + (questionData["question_ids"].length + 1);
+            if (questionData[newQuestionId]) {
               reindexQuestions();
             }
 
-            dataset["question_ids"].push(newQuestionId);
-            dataset[newQuestionId] = {
+            questionData["question_ids"].push(newQuestionId);
+            questionData[newQuestionId] = {
+              'key': newQuestionId,
               'text': '',
               'user': username,
               'answers': []
             };
             await renderQuestions();
           });
-          questionsElem.appendChild(answerButton);
+          addQuestionElem.appendChild(answerButton);
         }
 
         function renderQuestionDiv(questionId, questionText) {
@@ -145,13 +168,13 @@
           const questionInput = questionDiv.querySelector('input[name=' + questionId + ']');
           questionInput.addEventListener('blur', (event) => {
             const inputElem = event.srcElement;
-            dataset[questionId].text = inputElem ? inputElem.value : '';
+            questionData[questionId].text = inputElem ? inputElem.value : '';
           });
 
           // handle removing a question
           const removeButton = questionDiv.querySelector('#' + questionId + '_button');
           removeButton.addEventListener('click', async () => {
-            delete dataset[questionId];
+            delete questionData[questionId];
             reindexQuestions();
             await renderQuestions();
           });
@@ -163,26 +186,24 @@
         // ensure the question ids are correct
         function reindexQuestions() {
           let questionNum = 1;
-          let newData = { 'key': dataset.key, 'updated_at': dataset.updated_at, 'question_ids': [] };
-          Object.keys(dataset).sort().forEach( key => {
+          let newData = { 'question_ids': [] };
+          Object.keys(questionData).sort().forEach( key => {
             // skipping metadata
-            if (!key.match(/q_\d+/)) {
-              delete dataset[key];
+            if (key === 'question_ids') {
+              delete questionData[key];
               return;
             }
 
             // copying questions to new object
-            const questionId = 'q_' + questionNum;
-            newData[questionId] = dataset[key];
+            const questionId = self.collection_keys.question_prefix + questionNum;
+            newData[questionId] = questionData[key];
+            newData[questionId].key = questionId;
             newData['question_ids'].push(questionId);
-            delete dataset[key];
+            delete questionData[key];
 
             questionNum++;
           });
-          dataset = newData;
-        }
-
-        function cleanUpOrphanedQuestions() {
+          questionData = newData;
         }
       };
     }
