@@ -127,7 +127,10 @@
             if ( key === 'question_ids' ) return;
             entries.push(questionData[key]);
           } );
-          await self.data.store.set({ key: self.constants.key_questions, 'entries': entries });
+          await self.data.store.set({ key: self.constants.key_questions, 'entries': entries }).then (() => {
+              console.log("success")
+              alert("Saved")
+          });
           await renderQuestions();
         });
 
