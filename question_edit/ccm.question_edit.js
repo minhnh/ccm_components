@@ -113,9 +113,9 @@
         // render button to add new questions
         renderAddQuestionButton();
 
-        saveData();
+        renderSaveElem();
 
-        function saveData(){
+        function renderSaveElem(){
           const saveButton = document.createElement('button');
           const notificationSpan = document.createElement('span');
           saveElem.appendChild(saveButton);
