@@ -96,7 +96,7 @@
         const questionsElem = self.element.querySelector( '#questions' );
         const addQuestionElem = self.element.querySelector( '#add_question' );
         const saveElem = self.element.querySelector( '#save' );
-
+        
         // load initial data from store
         await self.data.store.get(self.constants.key_questions).then( (questions) => {
           let questionIds = [];
@@ -114,9 +114,11 @@
         // render button to add new questions
         renderAddQuestionButton();
 
-        // render save button
         const saveButton = document.createElement('button');
+        const notificationSpan = document.createElement('span');
         saveElem.appendChild(saveButton);
+        saveElem.appendChild(notificationSpan);
+
         saveButton.setAttribute('type', 'button');
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
@@ -127,9 +129,10 @@
             if ( key === 'question_ids' ) return;
             entries.push(questionData[key]);
           } );
+
           await self.data.store.set({ key: self.constants.key_questions, 'entries': entries }).then (() => {
-              console.log("success")
-              alert("Saved")
+              notificationSpan.innerHTML = 'Success';
+              notificationSpan.className = "alert alert-dismissible";
           });
           await renderQuestions();
         });
