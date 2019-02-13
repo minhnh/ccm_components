@@ -113,28 +113,36 @@
         // render button to add new questions
         renderAddQuestionButton();
 
-        const saveButton = document.createElement('button');
-        const notificationSpan = document.createElement('span');
-        saveElem.appendChild(saveButton);
-        saveElem.appendChild(notificationSpan);
+        renderSaveElem();
 
-        saveButton.setAttribute('type', 'button');
-        saveButton.className = "btn btn-info";
-        saveButton.innerText = 'Save';
-        saveButton.addEventListener('click', async () => {
-          // TODO: confirm answers are stored?
-          let entries = [];
-          Object.keys(questionData).sort().forEach( ( key ) => {
-            if ( key === 'question_ids' ) return;
-            entries.push(questionData[key]);
-          } );
+        function renderSaveElem(){
+          const saveButton = document.createElement('button');
+          const notificationSpan = document.createElement('span');
+          saveElem.appendChild(saveButton);
+          saveElem.appendChild(notificationSpan);
+
+          saveButton.setAttribute('type', 'button');
+          saveButton.className = "btn btn-info";
+          saveButton.innerText = 'Save';
+          saveButton.addEventListener('click', async () => {
+            // TODO: confirm answers are stored?
+            let entries = [];
+            Object.keys(questionData).sort().forEach( ( key ) => {
+              if ( key === 'question_ids' ) return;
+              entries.push(questionData[key]);
+            } );
+
 
           await self.data.store.set({ key: self.constants.key_questions, 'entries': entries }).then (() => {
               notificationSpan.innerHTML = 'Success';
               notificationSpan.className = "alert alert-dismissible";
+              setTimeout(function () {
+                notificationSpan.innerHTML = ' ';
+              }, 1000);
           });
           await renderQuestions();
         });
+    }
 
         async function renderQuestions() {
           questionsElem.innerHTML = '';
