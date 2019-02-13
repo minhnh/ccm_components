@@ -138,7 +138,7 @@
               notificationSpan.className = "alert alert-dismissible";
               setTimeout(function () {
                 notificationSpan.innerHTML = ' ';
-              }, 4000);
+              }, 1000);
           });
           await renderQuestions();
         });
