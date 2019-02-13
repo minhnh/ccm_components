@@ -96,7 +96,6 @@
         const questionsElem = self.element.querySelector( '#questions' );
         const addQuestionElem = self.element.querySelector( '#add_question' );
         const saveElem = self.element.querySelector( '#save' );
-        
         // load initial data from store
         await self.data.store.get(self.constants.key_questions).then( (questions) => {
           let questionIds = [];
