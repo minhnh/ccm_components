@@ -21,7 +21,7 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "qa_"        // will be prepended to question-answer pair indices to create element ID's
       },
 
       "html": {
@@ -105,17 +105,18 @@
         // get page fragments
         const contentElem = self.element.querySelector( '#content' );
         const saveElem = self.element.querySelector( '#save' );
-
+        // const qaId = null;
         // load questions from store
         await self.data.store.get(self.constants.key_questions).then( (questions) => {
           questions && questions.entries && questions.entries.forEach( (entry, i) => {
             const qaId = self.constants.qa_prefix + i;
             qaData[qaId] = {};
             qaData[qaId]['question'] = entry.text;
+            console.log(qaData[qaId]['question']);
           } );
         });
 
-        renderQAPairs();
+         renderQAPairs();
 
         // render save button
         const saveButton = document.createElement('button');
@@ -124,8 +125,27 @@
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
         saveButton.addEventListener('click', async () => {
-          // TODO
+          let payload = {
+            key : "",
+            answers: []
+          };
+
+          payload.key = username;
+          Object.keys(qaData).sort().forEach( ( key ) => {
+
+            if ( key === 'question' ) return;
+            let aId = "#" + key + "_answer";
+            let answer = {
+              text : contentElem.querySelector(aId).value,
+              ranking: []
+            }
+            payload.answers.push(answer);
+          });
+
+        await self.data.store.set(payload).then (() => {
+          console.log('success');
         });
+      });
 
         function renderQAPairs() {
           Object.keys(qaData).sort().forEach( (qaId) => {
@@ -134,11 +154,11 @@
 
             qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_id\$/g, qaId);
             qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_question\$/g, qaData[qaId].question);
-            const answer = qaData[qaId].answer ? qaData[qaId].answer : '';
+            const answer = qaData[qaId].text ? qaData[qaId].text : '';
             qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_answer\$/g, answer);
             contentElem.appendChild(qaDiv);
           } );
-        }
+         }
       };
 
     }
