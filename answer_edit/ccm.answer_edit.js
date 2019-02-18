@@ -105,18 +105,17 @@
         // get page fragments
         const contentElem = self.element.querySelector( '#content' );
         const saveElem = self.element.querySelector( '#save' );
-        // const qaId = null;
+
         // load questions from store
         await self.data.store.get(self.constants.key_questions).then( (questions) => {
           questions && questions.entries && questions.entries.forEach( (entry, i) => {
             const qaId = self.constants.qa_prefix + i;
             qaData[qaId] = {};
             qaData[qaId]['question'] = entry.text;
-            console.log(qaData[qaId]['question']);
           } );
         });
 
-         renderQAPairs();
+        renderQAPairs();
 
         // render save button
         const saveButton = document.createElement('button');
@@ -159,7 +158,7 @@
             contentElem.appendChild(qaDiv);
           } );
          }
-      };
+    };
 
     }
 
