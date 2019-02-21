@@ -22,7 +22,13 @@ ccm.files[ 'question_answers_data.js' ] = {
     },
 
     "mnguy12s": {
-        "answers": [],
-        "ranking": []
+        "answers": {
+            "9c7d5b046878838d": "es geht",
+            "51ebe90aeed77259": "I don't know"
+        },
+        "ranking": {
+            "9c7d5b046878838d": [],
+            "51ebe90aeed77259": []
+        }
     }
 };
