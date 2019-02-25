@@ -81,7 +81,6 @@
         // get dataset for rendering
         const self = this;
         const qaData = {};
-        const aData = {};
         let userData;
 
         // login
