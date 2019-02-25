@@ -85,9 +85,9 @@
         let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
-        } ).catch((exception) => console.log('login: ' + exception.error));
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-        if (!username) {
+        if ( !username ) {
           self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
               '  Please login to continue!\n' +
               '</div>';
@@ -112,7 +112,7 @@
             },
             reason => {   // read questions failed
               console.log( reason );
-            }).catch( err => console.log( err.message ) );    // unhandled exception
+            } ).catch( err => console.log( err.message ) );    // unhandled exception
 
         // render questions
         renderQuestions();
@@ -129,23 +129,23 @@
           saveElem.appendChild( saveButton );
           saveElem.appendChild( notificationSpan );
 
-          saveButton.setAttribute('type', 'button' );
+          saveButton.setAttribute( 'type', 'button' );
           saveButton.className = "btn btn-info";
           saveButton.innerText = 'Save';
-          saveButton.addEventListener('click', async () => {
+          saveButton.addEventListener( 'click', async () => {
             await self.data.store.set( { key: self.constants.key_questions, 'entries': questionData } ).then (
                 () => {       // successful update
                   notificationSpan.innerHTML = 'Success';
                   notificationSpan.className = "alert alert-dismissible";
-                  setTimeout(function () {
+                  setTimeout( function () {
                     notificationSpan.innerHTML = ' ';
-                  }, 1000);
+                  }, 1000 );
                 },
                 reason => {   // write failed
                   console.log( reason );
-                }).catch( err => console.log( err.message ) );    // unhandled exception
+                } ).catch( err => console.log( err.message ) );    // unhandled exception
             renderQuestions();
-        });
+        } );
     }
 
         function renderQuestions() {
@@ -153,15 +153,15 @@
           Object.keys( questionData ).forEach( questionId => {
             const question = questionData[ questionId ];
             questionsElem.appendChild( renderQuestionDiv( questionId, question ? question.text : '' ) );
-          });
+          } );
         }
 
         function renderAddQuestionButton() {
-          const addQuestionButton = document.createElement('button' );
+          const addQuestionButton = document.createElement( 'button' );
           addQuestionButton.className = 'btn btn-link';
-          addQuestionButton.setAttribute('type', 'button' );
+          addQuestionButton.setAttribute( 'type', 'button' );
           addQuestionButton.innerText = 'Add New Question';
-          addQuestionButton.addEventListener('click', async () => {
+          addQuestionButton.addEventListener( 'click', async () => {
             const emptyQuestionId = getQuestionId( '' );
 
             // if there is already an empty entry return
@@ -174,12 +174,12 @@
               'answered_by': []
             };
             renderQuestions();
-          });
+          } );
           addQuestionElem.appendChild( addQuestionButton );
         }
 
         function renderQuestionDiv( questionId, questionText ) {
-          const questionDiv = document.createElement('div');
+          const questionDiv = document.createElement( 'div' );
           questionDiv.className = "input-group mb-3";
           questionDiv.innerHTML = self.question_html;
 
@@ -187,7 +187,7 @@
           const questionIdHtml = self.constants.question_prefix + questionId;
           questionDiv.innerHTML = questionDiv.innerHTML.replace(
               /\$question_id\$/g, questionIdHtml );
-          questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_text\$/g, questionText);
+          questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$question_text\$/g, questionText );
 
           // write text content to dataset when question field is unfocused
           const questionInput = questionDiv.querySelector( 'input[name=\'' + questionIdHtml + '\']' );
@@ -195,14 +195,14 @@
             const inputElem = event.srcElement;
             questionData[ questionId ].text = inputElem ? inputElem.value : '';
             reindexQuestions();
-          });
+          } );
 
           // handle removing a question
-          const removeButton = questionDiv.querySelector('#' + questionIdHtml + '_button' );
-          removeButton.addEventListener('click', async () => {
+          const removeButton = questionDiv.querySelector( '#' + questionIdHtml + '_button' );
+          removeButton.addEventListener( 'click', async () => {
             delete questionData[ questionId ];
             renderQuestions();
-          });
+          } );
           questionDiv.appendChild( removeButton );
 
           return questionDiv;
@@ -219,7 +219,7 @@
 
             questionData[ questionId ] = questionData[ key ];
             delete questionData[ key ];
-          });
+          } );
         }
 
         // create question ID from text

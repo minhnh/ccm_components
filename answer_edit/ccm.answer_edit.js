@@ -87,9 +87,9 @@
         let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
-        } ).catch((exception) => console.log('login: ' + exception.error));
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-        if (!username) {
+        if ( !username ) {
           self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
               '  Please login to continue!\n' +
               '</div>';
@@ -139,22 +139,22 @@
         renderQAPairs();
 
         // render save button
-        const saveButton = document.createElement('button' );
-        saveElem.appendChild(saveButton);
-        saveButton.setAttribute('type', 'button' );
+        const saveButton = document.createElement( 'button' );
+        saveElem.appendChild( saveButton );
+        saveButton.setAttribute( 'type', 'button' );
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
-        saveButton.addEventListener('click', async () => {
+        saveButton.addEventListener( 'click', async () => {
           // TODO
-        });
+        } );
 
         function renderQAPairs() {
-          Object.keys( qaData ).forEach(( questionId ) => {
-            const qaDiv = document.createElement('div' );
+          Object.keys( qaData ).forEach( ( questionId ) => {
+            const qaDiv = document.createElement( 'div' );
             qaDiv.innerHTML = self.qa_html;
 
             const questionIdHtml = self.constants.qa_prefix + questionId;
-            qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_id\$/g, questionIdHtml);
+            qaDiv.innerHTML = qaDiv.innerHTML.replace( /\$qa_id\$/g, questionIdHtml );
 
             // set question text
             const questionTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_question" );
@@ -165,7 +165,7 @@
             const answerTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_answer" );
             answerTextElem.innerHTML = answer;
 
-            contentElem.appendChild(qaDiv);
+            contentElem.appendChild( qaDiv );
           } );
         }
       };
