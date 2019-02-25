@@ -23,7 +23,8 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "question_prefix": "q_"         // will be prepended to question indices to create element ID's
+        "question_prefix": "q_",        // will be prepended to question indices to create element ID's
+        "truncate_length": 16           // number of characters to keep as ID for hashed questions
       },
 
       // $question_id$ and $question_text$ will be replaced with according values for each question
@@ -54,6 +55,13 @@
           attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
         }
       ],
+
+      'js': [
+        'ccm.load', {
+          // crypto-js module for hashing question data TODO: move to repo for faster loading
+          url: "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js", type: 'js', context: 'head'
+        }
+      ]
     },
 
     Instance: function () {
@@ -77,9 +85,9 @@
         let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
-        } ).catch((exception) => console.log('login: ' + exception.error));
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-        if (!username) {
+        if ( !username ) {
           self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
               '  Please login to continue!\n' +
               '</div>';
@@ -96,131 +104,129 @@
         const questionsElem = self.element.querySelector( '#questions' );
         const addQuestionElem = self.element.querySelector( '#add_question' );
         const saveElem = self.element.querySelector( '#save' );
+
         // load initial data from store
-        await self.data.store.get(self.constants.key_questions).then( (questions) => {
-          let questionIds = [];
-          questions && questions.entries && questions.entries.forEach( (entry, i) => {
-            const questionId = self.constants.question_prefix + i;
-            questionIds.push(questionId);
-            questionData[questionId] = entry;
-          } );
-          questionData["question_ids"] = questionIds;
-        });
+        await self.data.store.get( self.constants.key_questions ).then(
+            questions => {
+              Object.assign( questionData, questions && questions.entries ? questions.entries : {} );
+            },
+            reason => {   // read questions failed
+              console.log( reason );
+            } ).catch( err => console.log( err.message ) );    // unhandled exception
 
         // render questions
-        await renderQuestions();
+        renderQuestions();
 
         // render button to add new questions
         renderAddQuestionButton();
 
+        // render area with save button and notification
         renderSaveElem();
 
         function renderSaveElem(){
-          const saveButton = document.createElement('button');
-          const notificationSpan = document.createElement('span');
-          saveElem.appendChild(saveButton);
-          saveElem.appendChild(notificationSpan);
+          const saveButton = document.createElement( 'button' );
+          const notificationSpan = document.createElement( 'span' );
+          saveElem.appendChild( saveButton );
+          saveElem.appendChild( notificationSpan );
 
-          saveButton.setAttribute('type', 'button');
+          saveButton.setAttribute( 'type', 'button' );
           saveButton.className = "btn btn-info";
           saveButton.innerText = 'Save';
-          saveButton.addEventListener('click', async () => {
-            // TODO: confirm answers are stored?
-            let entries = [];
-            Object.keys(questionData).sort().forEach( ( key ) => {
-              if ( key === 'question_ids' ) return;
-              entries.push(questionData[key]);
-            } );
-
-
-          await self.data.store.set({ key: self.constants.key_questions, 'entries': entries }).then (() => {
-              notificationSpan.innerHTML = 'Success';
-              notificationSpan.className = "alert alert-dismissible";
-              setTimeout(function () {
-                notificationSpan.innerHTML = ' ';
-              }, 1000);
-          });
-          await renderQuestions();
-        });
+          saveButton.addEventListener( 'click', async () => {
+            await self.data.store.set( { key: self.constants.key_questions, 'entries': questionData } ).then (
+                () => {       // successful update
+                  notificationSpan.innerHTML = 'Success';
+                  notificationSpan.className = "alert alert-dismissible";
+                  setTimeout( function () {
+                    notificationSpan.innerHTML = ' ';
+                  }, 1000 );
+                },
+                reason => {   // write failed
+                  console.log( reason );
+                } ).catch( err => console.log( err.message ) );    // unhandled exception
+            renderQuestions();
+        } );
     }
 
-        async function renderQuestions() {
+        function renderQuestions() {
           questionsElem.innerHTML = '';
-          questionData["question_ids"].forEach(async (questionId) => {
-            const question = questionData[questionId];
-            questionsElem.appendChild(renderQuestionDiv(questionId, question ? question.text : ''));
-          });
+          Object.keys( questionData ).forEach( questionId => {
+            const question = questionData[ questionId ];
+            questionsElem.appendChild( renderQuestionDiv( questionId, question ? question.text : '' ) );
+          } );
         }
 
         function renderAddQuestionButton() {
-          const answerButton = document.createElement('button');
-          answerButton.className = 'btn btn-link';
-          answerButton.setAttribute('type', 'button');
-          answerButton.innerText = 'Add New Question';
-          answerButton.addEventListener('click', async () => {
-            const newQuestionId = self.constants.question_prefix + (questionData["question_ids"].length + 1);
-            if (questionData[newQuestionId]) {
-              reindexQuestions();
-            }
+          const addQuestionButton = document.createElement( 'button' );
+          addQuestionButton.className = 'btn btn-link';
+          addQuestionButton.setAttribute( 'type', 'button' );
+          addQuestionButton.innerText = 'Add New Question';
+          addQuestionButton.addEventListener( 'click', async () => {
+            const emptyQuestionId = getQuestionId( '' );
 
-            questionData["question_ids"].push(newQuestionId);
-            questionData[newQuestionId] = {
+            // if there is already an empty entry return
+            if ( questionData[ emptyQuestionId ] ) return;
+
+            // add empty question entry
+            questionData[ emptyQuestionId ] = {
               'text': '',
               'last_modified': username,
               'answered_by': []
             };
-            await renderQuestions();
-          });
-          addQuestionElem.appendChild(answerButton);
+            renderQuestions();
+          } );
+          addQuestionElem.appendChild( addQuestionButton );
         }
 
-        function renderQuestionDiv(questionId, questionText) {
-          const questionDiv = document.createElement('div');
+        function renderQuestionDiv( questionId, questionText ) {
+          const questionDiv = document.createElement( 'div' );
           questionDiv.className = "input-group mb-3";
           questionDiv.innerHTML = self.question_html;
 
-          questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_id\$/g, questionId);
-          questionDiv.innerHTML = questionDiv.innerHTML.replace(/\$question_text\$/g, questionText);
+          // ensure valid question ID's and name, i.e. no leading number
+          const questionIdHtml = self.constants.question_prefix + questionId;
+          questionDiv.innerHTML = questionDiv.innerHTML.replace(
+              /\$question_id\$/g, questionIdHtml );
+          questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$question_text\$/g, questionText );
 
           // write text content to dataset when question field is unfocused
-          const questionInput = questionDiv.querySelector('input[name=' + questionId + ']');
-          questionInput.addEventListener('blur', (event) => {
+          const questionInput = questionDiv.querySelector( 'input[name=\'' + questionIdHtml + '\']' );
+          questionInput.addEventListener( 'blur', ( event ) => {
             const inputElem = event.srcElement;
-            questionData[questionId].text = inputElem ? inputElem.value : '';
-          });
+            questionData[ questionId ].text = inputElem ? inputElem.value : '';
+            reindexQuestions();
+          } );
 
           // handle removing a question
-          const removeButton = questionDiv.querySelector('#' + questionId + '_button');
-          removeButton.addEventListener('click', async () => {
-            delete questionData[questionId];
-            reindexQuestions();
-            await renderQuestions();
-          });
-          questionDiv.appendChild(removeButton);
+          const removeButton = questionDiv.querySelector( '#' + questionIdHtml + '_button' );
+          removeButton.addEventListener( 'click', async () => {
+            delete questionData[ questionId ];
+            renderQuestions();
+          } );
+          questionDiv.appendChild( removeButton );
 
           return questionDiv;
         }
 
         // ensure the question ids are correct
         function reindexQuestions() {
-          let questionNum = 1;
-          let newData = { 'question_ids': [] };
-          Object.keys(questionData).sort().forEach( key => {
-            // skipping metadata
-            if (key === 'question_ids') {
-              delete questionData[key];
-              return;
-            }
+          Object.keys( questionData ).forEach( key => {
+            // calculate new question ID
+            const questionId = getQuestionId( questionData[ key ][ "text" ] );
 
-            // copying questions to new object
-            const questionId = self.constants.question_prefix + questionNum;
-            newData[questionId] = questionData[key];
-            newData['question_ids'].push(questionId);
-            delete questionData[key];
+            // return if key matches calculated id
+            if ( questionId === key ) return;
 
-            questionNum++;
-          });
-          questionData = newData;
+            questionData[ questionId ] = questionData[ key ];
+            delete questionData[ key ];
+          } );
+        }
+
+        // create question ID from text
+        function getQuestionId( questionText ) {
+          // use a truncated SHA-256 as new question ID
+          const hashObj = CryptoJS.SHA256( questionText.trim() );
+          return hashObj.toString().substring( 0, self.constants.truncate_length );
         }
       };
     }

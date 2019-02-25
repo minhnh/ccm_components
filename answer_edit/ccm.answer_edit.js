@@ -1,6 +1,6 @@
 /**
- * @overview example ccm component that just renders "Hello, World!"
- * @author André Kless <andre.kless@web.de> 2017-2018
+ * @overview ccm component to edit answers for questions created with question_edit
+ * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de> 2019
  * @license The MIT License (MIT)
  */
 
@@ -31,23 +31,22 @@
         ]
       },
 
-      // '$qa_id$', '$qa_question$' will be replaced with according values for each question
+      // '$qa_id$' will be replaced with according values for each question
       "qa_html": '<div class="input-group row m-1">\n' +
           '  <div class="input-group-prepend col-sm-0 p-1">' +
           '    <label for="$qa_id$_question" class="text-secondary">Question</label>' +
           '  </div>\n' +
           '  <div class="col-sm-0">\n' +
           '    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="$qa_id$_question"' +
-          '           value="$qa_question$">\n' +
+          '           value="">\n' +
           '  </div>\n' +
           '</div>\n' +
           '<div class="input-group row mb-3 m-1">\n' +
           '  <div class="input-group-prepend col-md-0" >\n' +
           '    <label for="$qa_id$_answer" class="p-2 input-group-text">Answer</label>\n' +
           '  </div>\n' +
-          '  <div class="col-lg-0">' +
-          '    <textarea class="form-control" aria-label="Answer" id="$qa_id$_answer" style="resize: both;">' +
-          '      $qa_answer$' +
+          '  <div class="col-lg-0">\n' +
+          '    <textarea class="form-control" aria-label="Answer" id="$qa_id$_answer" style="resize: both;">\n' +
           '    </textarea>' +
           '  </div>\n' +
           '</div>',
@@ -82,14 +81,15 @@
         // get dataset for rendering
         const self = this;
         const qaData = {};
+        let userData;
 
         // login
         let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
-        } ).catch((exception) => console.log('login: ' + exception.error));
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-        if (!username) {
+        if ( !username ) {
           self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
               '  Please login to continue!\n' +
               '</div>';
@@ -107,36 +107,65 @@
         const saveElem = self.element.querySelector( '#save' );
 
         // load questions from store
-        await self.data.store.get(self.constants.key_questions).then( (questions) => {
-          questions && questions.entries && questions.entries.forEach( (entry, i) => {
-            const qaId = self.constants.qa_prefix + i;
-            qaData[qaId] = {};
-            qaData[qaId]['question'] = entry.text;
-          } );
-        });
+        await self.data.store.get( self.constants.key_questions ).then(
+            questions => {
+              questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
+                qaData[ questionId ] = {};
+                qaData[ questionId ][ 'question' ] = questions.entries[ questionId ].text;
+              } );
+            },
+            reason => console.log( reason )             // read from data store failed
+        ).catch( err => console.log( err.message ) );   // unhandled exception
+
+        // load answers from store
+        await self.data.store.get( username ).then(
+            ud => {
+              userData = ud;
+              if ( !userData ) {
+                // create new user data document if not exist
+                userData = { "answers": {}, "ranking": {} }
+              }
+
+              userData.answers && Object.keys( userData.answers ).forEach( questionId => {
+                // if no question on record for this answer, skip entry
+                if ( !qaData[ questionId ] ) return;
+
+                qaData[ questionId ][ 'answer' ] = userData.answers[ questionId ];
+              } );
+            },
+            reason => console.log( reason )             // read from data store failed
+        ).catch( err => console.log( err.message ) );   // unhandled exception
 
         renderQAPairs();
 
         // render save button
-        const saveButton = document.createElement('button');
-        saveElem.appendChild(saveButton);
-        saveButton.setAttribute('type', 'button');
+        const saveButton = document.createElement( 'button' );
+        saveElem.appendChild( saveButton );
+        saveButton.setAttribute( 'type', 'button' );
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
-        saveButton.addEventListener('click', async () => {
+        saveButton.addEventListener( 'click', async () => {
           // TODO
-        });
+        } );
 
         function renderQAPairs() {
-          Object.keys(qaData).sort().forEach( (qaId) => {
-            const qaDiv = document.createElement('div');
+          Object.keys( qaData ).forEach( ( questionId ) => {
+            const qaDiv = document.createElement( 'div' );
             qaDiv.innerHTML = self.qa_html;
 
-            qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_id\$/g, qaId);
-            qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_question\$/g, qaData[qaId].question);
-            const answer = qaData[qaId].answer ? qaData[qaId].answer : '';
-            qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_answer\$/g, answer);
-            contentElem.appendChild(qaDiv);
+            const questionIdHtml = self.constants.qa_prefix + questionId;
+            qaDiv.innerHTML = qaDiv.innerHTML.replace( /\$qa_id\$/g, questionIdHtml );
+
+            // set question text
+            const questionTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_question" );
+            questionTextElem.setAttribute( 'value', qaData[ questionId ].question );
+
+            // set answer text
+            const answer = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
+            const answerTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_answer" );
+            answerTextElem.innerHTML = answer;
+
+            contentElem.appendChild( qaDiv );
           } );
         }
       };
