@@ -82,6 +82,7 @@
         // get dataset for rendering
         const self = this;
         const qaData = {};
+        const aData = {};
 
         // login
         let username;
@@ -115,11 +116,22 @@
           } );
         });
 
-        renderQAPairs();
+        //load answers from store
+        await self.data.store.get(username).then( (username) => {
+           username.answers.forEach( (entry, i) => {
+           const aId = self.constants.qa_prefix + i + "_answer";
+           aData[aId] = {};
+           aData[aId]['answers'] = entry.text;
+           });
+        });
+
+         renderQAPairs();
 
         // render save button
         const saveButton = document.createElement('button');
+        const notificationSpan = document.createElement('span');
         saveElem.appendChild(saveButton);
+        saveElem.appendChild(notificationSpan);
         saveButton.setAttribute('type', 'button');
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
@@ -131,7 +143,6 @@
 
           payload.key = username;
           Object.keys(qaData).sort().forEach( ( key ) => {
-
             if ( key === 'question' ) return;
             let aId = "#" + key + "_answer";
             let answer = {
@@ -142,19 +153,27 @@
           });
 
         await self.data.store.set(payload).then (() => {
-          console.log('success');
+          notificationSpan.innerHTML = 'Success';
+          notificationSpan.className = "alert alert-dismissible";
+          setTimeout(function () {
+            notificationSpan.innerHTML = ' ';
+          }, 1000);
         });
       });
 
         function renderQAPairs() {
-          Object.keys(qaData).sort().forEach( (qaId) => {
+          Object.keys(qaData, aData).sort().forEach( ( qaId ) => {
+            const aId = qaId + "_answer";
             const qaDiv = document.createElement('div');
             qaDiv.innerHTML = self.qa_html;
-
             qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_id\$/g, qaId);
             qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_question\$/g, qaData[qaId].question);
-            const answer = qaData[qaId].text ? qaData[qaId].text : '';
-            qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_answer\$/g, answer);
+            if( typeof aData[aId] === 'undefined' ){
+              qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_answer\$/g, '');
+            }
+            else if( typeof aData[aId].answers != 'undefined' ){
+              qaDiv.innerHTML = qaDiv.innerHTML.replace(/\$qa_answer\$/g, aData[aId].answers);
+            }
             contentElem.appendChild(qaDiv);
           } );
          }
