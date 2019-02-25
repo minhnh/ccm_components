@@ -21,7 +21,7 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "qa_"        // will be prepended to question-answer pair indices to create element ID's
       },
 
       "html": {
@@ -140,13 +140,32 @@
 
         // render save button
         const saveButton = document.createElement( 'button' );
+        const notificationSpan = document.createElement( 'span' );
         saveElem.appendChild( saveButton );
+        saveElem.appendChild( notificationSpan );
         saveButton.setAttribute( 'type', 'button' );
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
         saveButton.addEventListener( 'click', async () => {
-          // TODO
-        } );
+          let payload = {
+            key : username,
+            answers: {}
+          };
+
+          Object.keys( qaData ).forEach( ( key ) => {
+            const questionIdHtml = self.constants.qa_prefix + key;
+            let aId = "textarea#" + questionIdHtml + "_answer";
+            payload.answers[key] = contentElem.querySelector( aId ).value;
+          });
+
+          await self.data.store.set( payload ).then( () => {
+            notificationSpan.innerHTML = 'Success';
+            notificationSpan.className = "alert alert-dismissible";
+            setTimeout( function () {
+              notificationSpan.innerHTML = ' ';
+            }, 1000 );
+          } );
+        } );  // end saveButton.addEventListener()
 
         function renderQAPairs() {
           Object.keys( qaData ).forEach( ( questionId ) => {
@@ -166,13 +185,11 @@
             answerTextElem.innerHTML = answer;
 
             contentElem.appendChild( qaDiv );
-          } );
-        }
-      };
-
-    }
-
-  };
+          } );  // end Object.keys().forEach()
+        }  // end renderQAPairs()
+      };  // end this.start()
+    }  // end Instance()
+  };  // end component
 
   let b="ccm."+component.name+(component.version?"-"+component.version.join("."):"")+".js";if(window.ccm&&null===window.ccm.files[b])return window.ccm.files[b]=component;(b=window.ccm&&window.ccm.components[component.name])&&b.ccm&&(component.ccm=b.ccm);"string"===typeof component.ccm&&(component.ccm={url:component.ccm});let c=(component.ccm.url.match(/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)||["latest"])[0];if(window.ccm&&window.ccm[c])window.ccm[c].component(component);else{var a=document.createElement("script");document.head.appendChild(a);component.ccm.integrity&&a.setAttribute("integrity",component.ccm.integrity);component.ccm.crossorigin&&a.setAttribute("crossorigin",component.ccm.crossorigin);a.onload=function(){window.ccm[c].component(component);document.head.removeChild(a)};a.src=component.ccm.url}
 } )();

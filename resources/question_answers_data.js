@@ -10,13 +10,13 @@ ccm.files[ 'question_answers_data.js' ] = {
         "entries" : {
             "9c7d5b046878838d" : {
                 "text" : "How are you?",
-                    "last_modified" : "mnguy12s",
-                    "answered_by" : []
+                "last_modified" : "mnguy12s",
+                "answered_by" : []
             },
             "51ebe90aeed77259" : {
                 "text" : "what is robotics?",
-                    "last_modified" : "mnguy12s",
-                    "answered_by" : []
+                "last_modified" : "mnguy12s",
+                "answered_by" : []
             }
         }
     },
