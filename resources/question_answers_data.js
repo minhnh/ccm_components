@@ -7,22 +7,28 @@
 ccm.files[ 'question_answers_data.js' ] = {
     "questions": {
         "key" : "questions",
-        "entries" : [
-            {
-                "text" : "question 1",
+        "entries" : {
+            "9c7d5b046878838d" : {
+                "text" : "How are you?",
                 "last_modified" : "mnguy12s",
                 "answered_by" : []
             },
-            {
-                "text" : "question 2",
+            "51ebe90aeed77259" : {
+                "text" : "what is robotics?",
                 "last_modified" : "mnguy12s",
                 "answered_by" : []
             }
-        ]
+        }
     },
 
     "mnguy12s": {
-        "answers": [],
-        "ranking": []
+        "answers": {
+            "9c7d5b046878838d": "es geht",
+            "51ebe90aeed77259": "I don't know"
+        },
+        "ranking": {
+            "9c7d5b046878838d": [],
+            "51ebe90aeed77259": []
+        }
     }
 };
