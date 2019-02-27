@@ -5,7 +5,7 @@
  */
 ccm.files[ 'configs.js' ] = {
     "digiklausur": {
-        "key": "localhost",
+        "key": "digiklausur",
         "data": {
             "store": [ "ccm.store", {
                 "name": "question_answers_sample",
