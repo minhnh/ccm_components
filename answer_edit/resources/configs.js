@@ -4,6 +4,16 @@
  * @license The MIT License (MIT)
  */
 ccm.files[ 'configs.js' ] = {
+    "digiklausur": {
+        "key": "digiklausur",
+        "data": {
+            "store": [ "ccm.store", {
+                "name": "question_answers_sample",
+                "url": "https://digiklausur.ddns.net", "method": "POST"
+            } ]
+        }
+    },
+
     "localhost": {
         "key": "localhost",
         "data": {
