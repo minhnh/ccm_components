@@ -21,12 +21,20 @@
       ],
 
       'comp_accordion': [
-          'ccm.component', 'https://ccmjs.github.io/tkless-components/accordion/versions/ccm.accordion-2.0.0.js',
-        { // "css": [ "ccm.load", "resources/menu.css" ],
-        }
+          'ccm.component', 'https://ccmjs.github.io/tkless-components/accordion/versions/ccm.accordion-2.0.0.js'
       ],
 
-      'comp_blank': [ "ccm.component", "https://ccmjs.github.io/akless-components/blank/ccm.blank.js" ],
+      'comp_content': [
+        "ccm.component", "https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.0.js", {
+          config: {
+            'css': [
+              'ccm.load',
+              { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css' },
+              { url: 'https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css', type: 'css' }
+            ],
+          }
+        }
+      ],
 
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
@@ -113,17 +121,21 @@
           } );
 
           // setup signing in and out
-          const username = header.querySelector('#username');
-          const signOut = header.querySelector('#sign-out');
-          const signIn = header.querySelector('#sign-in');
+          const username = header.querySelector( '#username' );
+          const signOut = header.querySelector( '#sign-out' );
+          const signIn = header.querySelector( '#sign-in' );
+
+          // styling
+          username.className = 'text-light';
 
           signIn.addEventListener( 'click', async () => {
             self.user && await self.user.login().then ( () => {
-              username.innerHTML = "<i class=\"fa fa-user\"></i>" + self.user.data().user;
+              username.innerHTML = '<i class="fa fa-user"></i><span style="padding: 5px;">' +
+                                    self.user.data().user + '</span>';
               signIn.style.display = "none";
               signOut.style.display = "block";
               renderArticle();
-            } ).catch((exception) => console.log('login: ' + exception.error));
+            } ).catch((exception) => console.log( 'login: ' + exception.error) );
           } );
 
           signOut.addEventListener('click', async () => {
@@ -132,7 +144,7 @@
               signIn.style.display = "block";
               signOut.style.display = "none";
               renderArticle();
-            } ).catch((exception) => console.log('logout: ' + exception.error));
+            } ).catch( exception => console.log( 'logout: ' + exception.error ) );
           });
 
           // Home button
@@ -160,26 +172,37 @@
           }
 
           function renderHome() {
-            self.dataset.get('home_menu').then(
+            self.dataset.get( 'home_menu' ).then(
                 result => {
-                  let accordion_configs = { root: article, color: "info", size: "lg", entries: [] };
+                  let accordionConfigs = {
+                    root: article, color: "info", size: "lg", entries: [],
+                    // load bootstrap with content
+                    content: self.comp_content
+                  };
                   result.sections.forEach( section => {
-                    let menuEntries = document.createDocumentFragment();
+                    const store = section.store;
+                    const menuEntries = document.createDocumentFragment();
                     section.entries.forEach(
-                        entry => menuEntries.appendChild(getMenuEntryDiv(entry.title, entry.content))
+                        entry => menuEntries.appendChild( renderMenuEntry( entry.title, entry.content, store ) )
                     );
-                    accordion_configs.entries.push({ 'title': section.title, 'content': menuEntries })
+                    accordionConfigs.entries.push( { 'title': section.title, 'content': menuEntries } )
                   });
-                  self.comp_accordion.start( accordion_configs );
+                  self.comp_accordion.start( accordionConfigs );
                 });
 
-            function getMenuEntryDiv(title, content) {
-              const div = document.createElement( 'div' );
-              div.className = 'menu-entry';
-              div.setAttribute( 'style', 'width=100%;' );
-              div.innerText = title;
+            function renderMenuEntry( title, content, store ) {
+              const divElem = document.createElement( 'div' );
+              const questionIconSpan = document.createElement( 'span' );
+              questionIconSpan.innerHTML = '<i class="fa fa-question-circle text-info"></i>';
 
-              div.addEventListener('click', async( event ) => {
+              const entryLink = document.createElement( 'button' );
+              entryLink.className = 'btn btn-link';
+              entryLink.setAttribute( 'type', 'button' );
+              entryLink.innerText = title;
+              entryLink.addEventListener( 'click', async( event ) => {
+                // use the common store defined for each section
+                content.push( { "data": { "store": store } } );
+
                 // content is given as ccm dependency? => solve dependency
                 content = await $.solveDependency( content );
                 // content is ccm instance? => render instance as content
@@ -190,7 +213,10 @@
                 // render given content
                 else $.setContent( article, $.html( content ) );
               });
-              return div;
+
+              divElem.appendChild( questionIconSpan );
+              divElem.appendChild( entryLink );
+              return divElem;
             }
           }
         }
