@@ -30,5 +30,9 @@ ccm.files[ 'question_answers_data.js' ] = {
             "9c7d5b046878838d": [],
             "51ebe90aeed77259": []
         }
+    },
+
+    "role": {
+        "name": "student"
     }
 };

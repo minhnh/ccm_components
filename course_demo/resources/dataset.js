@@ -10,34 +10,44 @@ ccm.files[ 'dataset.js' ] = {
     'key': 'home_menu',
     'sections': [
       {
-        'title': 'Test Menu 1',
+        'title': 'Lecture 1',
+
+        'store': [ "ccm.store", {
+          "name": "question_answers_sample",
+          "url": "https://digiklausur.ddns.net", "method": "POST"
+        } ],
+
         'entries': [
           {
-            'title': 'test entry 1',
-            'content': [
-                'ccm.instance', 'https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.0.js',
-                { 'inner': '<h2>Aenean commodo ligula eget dolor aenean massa</h2>' }
-              ]
+            'title': 'Edit Questions or Answers',
+            'content': [ 'ccm.instance', '../question_answer/ccm.question_answer.js' ]
           },
           {
-            'title': 'test entry 2',
-            'content': [
-              'ccm.instance', 'https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.0.js',
-              {
-                'inner': '<ul>' +
-                    '  <li>Lorem ipsum dolor sit amet, consectetuer adipiscing.</li>\n' +
-                    '  <li>Cum sociis natoque.</li>\n' +
-                    '</ul>' }
-            ]
+            'title': 'Question Edit View',
+            'content': [ 'ccm.instance', '../question_edit/ccm.question_edit.js' ]
+          },
+          {
+            'title': 'Answer Edit View',
+            'content': [ 'ccm.instance', '../answer_edit/ccm.answer_edit.js' ]
           }
         ]
       },
       {
-        'title': 'Test Menu 2',
+        'title': 'Lecture 2',
+
+        'store': [ "ccm.store", {
+          "name": "question_answers_sample_2",
+          "url": "https://digiklausur.ddns.net", "method": "POST"
+        } ],
+
         'entries': [
           {
-            'title': 'test entry 3',
-            'content': [ 'ccm.instance', 'https://ccmjs.github.io/akless-components/blank/ccm.blank.js' ]
+            'title': 'Question Edit View',
+            'content': [ 'ccm.instance', '../question_edit/ccm.question_edit.js' ]
+          },
+          {
+            'title': 'Answer Edit View',
+            'content': [ 'ccm.instance', '../answer_edit/ccm.answer_edit.js' ]
           }
         ]
       }

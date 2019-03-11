@@ -14,6 +14,10 @@
   path: answer_edit
   description: View for answering questions
 
+- name: ccm.question_answer.js
+  path: question_answer
+  description: View for viewing question_edit or answer_edit view based on user role
+
 - name: ccm.course_demo.js
   path: course_demo
   description: Demo page for class organization
