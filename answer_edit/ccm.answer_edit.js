@@ -21,7 +21,8 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_"              // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
+        "truncate_length": 16           // number of characters to keep as ID for hashed answers
       },
 
       "html": {
@@ -54,6 +55,12 @@
       'css': [ 'ccm.load',
         { url: '../lib/css/bootstrap.min.css', type: 'css' },
         { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ],
+
+      'js': [
+        'ccm.load', {
+          url: "../lib/js/crypto-js.min.js", type: 'js', context: 'head'
+        }
       ]
     },
 
@@ -123,7 +130,7 @@
                 // if no question on record for this answer, skip entry
                 if ( !qaData[ questionId ] ) return;
 
-                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ];
+                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ][ 'text' ];
               } );
             },
             reason => console.log( reason )             // read from data store failed
@@ -148,7 +155,10 @@
           Object.keys( qaData ).forEach( ( key ) => {
             const questionIdHtml = self.constants.qa_prefix + key;
             let aId = "textarea#" + questionIdHtml + "_answer";
-            payload.answers[ key ] = contentElem.querySelector( aId ).value;
+            const ansText = contentElem.querySelector( aId ).value;
+            const hashObj = CryptoJS.SHA256( ansText.trim() );
+            const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
+            payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
           });
 
           await self.data.store.set( payload ).then( () => {
