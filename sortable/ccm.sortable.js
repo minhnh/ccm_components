@@ -14,16 +14,13 @@
     config: {
       'css': [
         'ccm.load',
-        { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css' },
-        { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head' }
+        { url: '../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [ 'ccm.load',
-        { url: 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js', type: 'js' },
-        {
-          url: 'https://code.jquery.com/jquery-3.3.1.slim.min.js', type: 'js', context: 'head',
-          attr: { integrity: 'sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo', crossorigin: 'anonymous' }
-        },
+        { url: '../lib/js/Sortable.min.js', type: 'js' },
+        { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' }
       ],
 
       'data': { 'store': [ 'ccm.store' ] },

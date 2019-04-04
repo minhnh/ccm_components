@@ -21,7 +21,7 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_"        // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "qa_"              // will be prepended to question-answer pair indices to create element ID's
       },
 
       "html": {
@@ -32,34 +32,29 @@
       },
 
       // '$qa_id$' will be replaced with according values for each question
-      "qa_html": '<div class="input-group row m-1">\n' +
-          '  <div class="input-group-prepend col-sm-0 p-1">' +
-          '    <label for="$qa_id$_question" class="text-secondary">Question</label>' +
-          '  </div>\n' +
-          '  <div class="col-sm-0">\n' +
-          '    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="$qa_id$_question"' +
-          '           value="">\n' +
-          '  </div>\n' +
-          '</div>\n' +
-          '<div class="input-group row mb-3 m-1">\n' +
-          '  <div class="input-group-prepend col-md-0" >\n' +
-          '    <label for="$qa_id$_answer" class="p-2 input-group-text">Answer</label>\n' +
-          '  </div>\n' +
-          '  <div class="col-lg-0">\n' +
-          '    <textarea class="form-control" aria-label="Answer" id="$qa_id$_answer" style="resize: both;">\n' +
-          '    </textarea>' +
-          '  </div>\n' +
-          '</div>',
+      "qa_html":
+`<div class="input-group row m-1">
+  <div class="input-group-prepend col-sm-0 p-1">
+    <label for="$qa_id$_question" class="text-secondary">Question</label>
+  </div>
+  <div class="col-sm-0">
+    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="$qa_id$_question" value="">
+  </div>
+</div>
+<div class="input-group row mb-3 m-1">
+  <div class="input-group-prepend col-md-0">
+    <label for="$qa_id$_answer" class="p-2 input-group-text">Answer</label>
+  </div>
+  <div class="col-lg-0">
+    <textarea class="form-control" aria-label="Answer" id="$qa_id$_answer" style="resize: both;">
+    </textarea>
+  </div>
+</div>`,
 
-      'css': [
-        'ccm.load', {
-          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css',
-          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-        }, {
-          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head',
-          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-        }
-      ],
+      'css': [ 'ccm.load',
+        { url: '../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ]
     },
 
     ccm: 'https://ccmjs.github.io/ccm/ccm.js',
@@ -81,7 +76,6 @@
         // get dataset for rendering
         const self = this;
         const qaData = {};
-        let userData;
 
         // login
         let username;
@@ -111,7 +105,7 @@
             questions => {
               questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
                 qaData[ questionId ] = {};
-                qaData[ questionId ][ 'question' ] = questions.entries[ questionId ].text;
+                qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
               } );
             },
             reason => console.log( reason )             // read from data store failed
@@ -120,17 +114,16 @@
         // load answers from store
         await self.data.store.get( username ).then(
             ud => {
-              userData = ud;
-              if ( !userData ) {
+              if ( !ud ) {
                 // create new user data document if not exist
-                userData = { "answers": {}, "ranking": {} }
+                ud = { "answers": {}, "ranking": {} }
               }
 
-              userData.answers && Object.keys( userData.answers ).forEach( questionId => {
+              ud.answers && Object.keys( ud.answers ).forEach( questionId => {
                 // if no question on record for this answer, skip entry
                 if ( !qaData[ questionId ] ) return;
 
-                qaData[ questionId ][ 'answer' ] = userData.answers[ questionId ];
+                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ];
               } );
             },
             reason => console.log( reason )             // read from data store failed
@@ -155,7 +148,7 @@
           Object.keys( qaData ).forEach( ( key ) => {
             const questionIdHtml = self.constants.qa_prefix + key;
             let aId = "textarea#" + questionIdHtml + "_answer";
-            payload.answers[key] = contentElem.querySelector( aId ).value;
+            payload.answers[ key ] = contentElem.querySelector( aId ).value;
           });
 
           await self.data.store.set( payload ).then( () => {

@@ -29,14 +29,15 @@
 
       // $question_id$ and $question_text$ will be replaced with according values for each question
       // id '$question_id$_button' will be used for handling remove event
-      "question_html": "<div class=\"input-group-prepend\">\n" +
-          "  <span class=\"input-group-text\" id=\"$question_id$_label\">Question</span>\n" +
-          "</div>\n" +
-          "<input type=\"text\" name=\"$question_id$\" class=\"form-control\" aria-label=\"Question\"\n" +
-          "       aria-describedby=\"$question_id$_label\" value=\"$question_text$\">\n" +
-          "<div class=\"input-group-append\">\n" +
-          "  <button class=\"btn btn-link\" type=\"button\" id=\"$question_id$_button\">Remove</button>\n" +
-          "</div>",
+      "question_html":
+`<div class="input-group-prepend">
+  <span class="input-group-text" id="$question_id$_label">Question</span>
+</div>
+<input type="text" name="$question_id$" class="form-control" aria-label="Question"
+       aria-describedby="$question_id$_label" value="$question_text$">
+<div class="input-group-append">
+  <button class="btn btn-link" type="button" id="$question_id$_button">Remove</button>
+</div>`,
 
       "html": {
         'main': [
@@ -46,20 +47,15 @@
         ]
       },
 
-      'css': [
-        'ccm.load', {
-          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css',
-          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-        }, {
-          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head',
-          attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-        }
+      'css': [ 'ccm.load',
+        { url: '../lib/css/bootstrap.min.css', type: 'css'},
+        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [
         'ccm.load', {
-          // crypto-js module for hashing question data TODO: move to repo for faster loading
-          url: "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js", type: 'js', context: 'head'
+          // crypto-js module for hashing question data
+          url: "../lib/js/crypto-js.min.js", type: 'js', context: 'head'
         }
       ]
     },
@@ -152,7 +148,7 @@
           questionsElem.innerHTML = '';
           Object.keys( questionData ).forEach( questionId => {
             const question = questionData[ questionId ];
-            questionsElem.appendChild( renderQuestionDiv( questionId, question ? question.text : '' ) );
+            questionsElem.appendChild( renderQuestionDiv( questionId, question ? question : '' ) );
           } );
         }
 
@@ -168,11 +164,7 @@
             if ( questionData[ emptyQuestionId ] ) return;
 
             // add empty question entry
-            questionData[ emptyQuestionId ] = {
-              'text': '',
-              'last_modified': username,
-              'answered_by': []
-            };
+            questionData[ emptyQuestionId ] = '';
             renderQuestions();
           } );
           addQuestionElem.appendChild( addQuestionButton );
@@ -193,7 +185,7 @@
           const questionInput = questionDiv.querySelector( 'input[name=\'' + questionIdHtml + '\']' );
           questionInput.addEventListener( 'blur', ( event ) => {
             const inputElem = event.srcElement;
-            questionData[ questionId ].text = inputElem ? inputElem.value : '';
+            questionData[ questionId ] = inputElem ? inputElem.value : '';
             reindexQuestions();
           } );
 
@@ -212,7 +204,7 @@
         function reindexQuestions() {
           Object.keys( questionData ).forEach( key => {
             // calculate new question ID
-            const questionId = getQuestionId( questionData[ key ][ "text" ] );
+            const questionId = getQuestionId( questionData[ key ] );
 
             // return if key matches calculated id
             if ( questionId === key ) return;

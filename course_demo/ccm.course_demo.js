@@ -29,8 +29,8 @@
           config: {
             'css': [
               'ccm.load',
-              { url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css' },
-              { url: 'https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css', type: 'css' }
+              { url: '../lib/css/bootstrap.min.css', type: 'css' },
+              { url: '../lib/css/fontawesome-all.min.css', type: 'css' }
             ],
           }
         }
@@ -38,31 +38,16 @@
 
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
-      'css': [
-        'ccm.load', {
-            url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css',
-            attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-          }, {
-            url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css', type: 'css', context: 'head',
-            attr: { integrity: 'sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS', crossorigin: 'anonymous' }
-          }, {
-            url: 'https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css', type: 'css',
-            attr: { integrity: 'sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN', crossorigin: 'anonymous' }
-          }, {
-            url: 'https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css', type: 'css', context: 'head',
-            attr: { integrity: 'sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN', crossorigin: 'anonymous' }
-          }
+      'css': [ 'ccm.load',
+        { url: '../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' },
+        { url: '../lib/css/fontawesome-all.min.css', type: 'css' },
+        { url: '../lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [ 'ccm.load', [
-        {
-          url: 'https://code.jquery.com/jquery-3.3.1.slim.min.js', type: 'js', context: 'head',
-          attr: { integrity: 'sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo', crossorigin: 'anonymous' }
-        },
-        {
-          url: 'https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.bundle.min.js', type: 'js', context: 'head',
-          attr: { integrity: 'sha384-zDnhMsjVZfS3hiP7oCBRmfjkQC4fzxVxFhBx8Hkz2aZX8gEvA/jsP3eXRCvzTofP', crossorigin: 'anonymous' }
-        }
+          { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
+          { url: '../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
         ]
       ],
 

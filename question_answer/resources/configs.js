@@ -25,7 +25,7 @@ ccm.files[ 'configs.js' ] = {
     },
 
     "local": {
-        "key": "localhost",
+        "key": "local",
         "data": {
             "store": [ 'ccm.store', '../resources/question_answers_data.js' ]
         }
