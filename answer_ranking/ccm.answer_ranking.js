@@ -18,16 +18,51 @@
 
       'comp_sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
 
+      'user': [
+        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-8.3.1.js',
+        [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
+      ],
+
+      // predefined values
+      'constants' : {
+        'key_questions': 'questions',   // key of store document containing question entries
+        'key_ans_prefix': 'answers_',   // question ID's will be appended to this to create the name of the document
+                                        // containing the question's answers
+        'num_answer': 5,                // number of answers to rank'question_html':
+        'question_html':                // default HTML for each question text element
+`
+<div class="input-group row m-1">
+  <div class="input-group-prepend col-sm-0 p-1">
+    <label for="q_$q_id$" class="text-secondary">Question</label>
+  </div>
+  <div class="col-sm-0">
+    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="q_$q_id$" value="">
+  </div>
+</div>
+`,
+      },
+
       'html': {
         "main": {
           "id": "main",
           "inner": [
-            { "id": "question" },
-            { "id": "answers" },
+            { "id": "ranking" },
             { "id": "submit" }
           ]
+        },
+        "rank_entry": {
+          "class": "rank_entry",
+          "inner": [
+            { "id": "question" },
+            { "id": "answers" }
+          ]
         }
-      }
+      },
+
+      'css': [ 'ccm.load',
+        { url: '../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ],
     },
 
     Instance: function () {
@@ -44,35 +79,170 @@
 
       this.start = async () => {
         // get dataset for rendering
-        const dataset = await $.dataset( this.data );
+        const self = this;
+        let qaData = {};
+        let userData;
+
+        // login
+        let username;
+        self.user && await self.user.login().then ( () => {
+          username = self.user.data().user;
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
+
+        if ( !username ) {
+          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
+              '  Please login to continue!\n' +
+              '</div>';
+          return;
+        }
 
         // has logger instance? => log 'start' event
-        this.logger && this.logger.log( 'start', $.clone( dataset ) );
+        self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
         $.setContent( this.element, $.html( this.html.main ) );
 
-        // contain list items
-        const question_elem = this.element.querySelector( '#question' );
-        const answers_elem = this.element.querySelector( '#answers' );
-        const submit_elem = this.element.querySelector( '#submit' );
+        // get page fragments
+        const rankingElem = this.element.querySelector( '#ranking' );
+        const submitElem = this.element.querySelector( '#submit' );
 
-        // render question
-        question_elem.innerHTML = dataset.question;
+        // load questions and answers from store
+        await self.data.store.get( self.constants.key_questions ).then(
+          questions => {
+            questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
+              qaData[ questionId ] = {};
+              qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
+              self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
+                if ( !answers ) {
+                  qaData[ questionId ][ 'answers' ] = {};
+                  return;
+                }
+                qaData[ questionId ][ 'answers' ] = answers;
+              },
+                reason => console.log( reason )               // read from data store failed
+              ).catch( err => console.log( err.message ) );   // unhandled exception
+            } );
+          },
+          reason => console.log( reason )               // read from data store failed
+        ).catch( err => console.log( err.message ) );   // unhandled exception
 
-        // render answers
-        const answer_comp = await this.comp_sortable.start({
-          root: answers_elem,
-          data: dataset.answers
-        });
+        // load user data
+        await self.data.store.get( username ).then( ud => {
+            userData = ud;
+          },
+          reason => console.log( reason )               // read from data store failed
+        ).catch( err => console.log( err.message ) );   // unhandled exception
 
-        // render submit button
-        const button = document.createElement( 'button' );
-        button.innerHTML = 'Submit';
-        button.addEventListener('click', () => {
-          console.log(answer_comp.getRanking());
-        });
-        submit_elem.appendChild(button);
+        // render question ranking entries
+        Object.keys( qaData ).forEach( async questionId => {
+          let selectedAns;
+          if ( !qaData[ questionId ][ 'answers' ] ) {
+            selectedAns = {}
+          } else {
+            selectedAns = getAnswers( userData, qaData[ questionId ][ 'answers' ] )
+          }
+          const docFrag = await renderAnswerRanking( questionId, selectedAns );
+          rankingElem.appendChild( docFrag );
+        } );
+
+        // render save button
+        const saveButton = document.createElement( 'button' );
+        saveButton.innerHTML = 'Save';
+        saveButton.className = 'btn btn-info';
+        saveButton.addEventListener( 'click', () => {
+          console.log( userData );
+        } );
+        submitElem.appendChild( saveButton );
+
+        function getAnswers( userData, allAnswers ) {
+          // if the number of ranked answers matches the specified, return these rankings
+          if ( Object.keys( userData[ 'ranking' ] ).length === self.constants.num_answer ) {
+            return userData[ 'ranking' ];
+          }
+
+          // else resample
+          const answers = {};
+          const ansByRankCount = {};
+          // first sort answers by rank count
+          for ( ansKey in allAnswers ) {
+            const numAnswers = Object.keys( answers ).length;
+            // if there are enough entries in 'answers', stop the loop
+            if ( numAnswers === self.constants.num_answer ) break;
+
+            // skip the user's own answers
+            if ( ansKey in  userData[ 'answers' ] ) continue;
+
+            // add to 'answers' if this answers is already ranked by the current user
+            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] ) {
+              answers[ ansKey ] = numAnswers;
+              continue;
+            }
+
+            // else add to 'ansByRankCount'
+            const rankCount = Object.keys( allAnswers[ ansKey ][ 'ranked_by' ] ).length;
+            if ( rankCount in ansByRankCount ) {
+              ansByRankCount[ rankCount ].push( ansKey );
+            } else {
+              ansByRankCount[ rankCount ] = [ ansKey ];
+            }
+          }
+
+          // Fill 'answers' randomly, starting from ones with the least number of ranking
+          for ( rankCount in Object.keys( ansByRankCount ).sort() ) {
+            let ansCount = Object.keys( answers ).length;
+            // if there are enough entries in 'answers', stop the loop
+            if ( ansCount === self.constants.num_answer ) break;
+
+            // if there are not enough entries in 'answers' AND there are still answers with the current
+            // number of ranking, randomly add more entries to 'answers'
+            const answerKeys = ansByRankCount[ rankCount ];
+            while ( ansCount < self.constants.num_answer && answerKeys.length > 0 ) {
+              const randIndex = Math.floor( Math.random() * answerKeys.length );
+              const selectedAnsKey = answerKeys.splice( randIndex, 1 )[ 0 ];
+              answers[ selectedAnsKey ] = ansCount;
+              ansCount = Object.keys( answers ).length;
+            }
+          }
+          return answers;
+        }
+
+        async function renderAnswerRanking( questionId, selectedAnswers ) {
+          const qaRankingFragment = document.createDocumentFragment();
+          $.setContent( qaRankingFragment, $.html( self.html.rank_entry ) );
+
+          // render the question area
+          const questionText = qaData[ questionId ][ 'question' ];
+          const questionDiv = qaRankingFragment.querySelector( '#question' );
+          questionDiv.innerHTML = self.constants.question_html;
+          questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$q_id\$/g, questionId );
+          const questionTextElem = questionDiv.querySelector( "#q_" + questionId );
+          questionTextElem.setAttribute( 'value', questionText );
+
+          // render the answer ranking area
+          const answersDiv = qaRankingFragment.querySelector( '#answers' );
+          const numAnswers = Object.keys( selectedAnswers ).length;
+          if ( numAnswers < self.constants.num_answer ) {
+            answersDiv.className = 'p-3 mb-2 bg-light text-dark';
+            answersDiv.innerText = 'can only find ' + numAnswers + ' answer(s) for this question, but we need '
+                                   + self.constants.num_answer + ' to rank';
+          } else {
+            // render answers
+            let answerEntries = [];
+            for ( ansId in selectedAnswers ) {
+              answerEntries[ selectedAnswers[ ansId ] ] = {
+                'id': ansId,
+                'content': qaData[ questionId ][ 'answers' ][ ansId ][ 'text' ]
+              };
+            }
+            console.log( answerEntries );
+            await self.comp_sortable.start( {
+              root: answersDiv,
+              data: { 'id': questionId + '_answers', 'items': answerEntries }
+            } );
+          }
+
+          return qaRankingFragment;
+        }  // end renderAnswerRanking()
       };
 
     }

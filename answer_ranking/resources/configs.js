@@ -4,19 +4,10 @@
  * @license The MIT License (MIT)
  */
 ccm.files[ 'configs.js' ] = {
-  "demo": {
-    "key": "demo",
+  "local": {
+    "key": "local",
     "data": {
-      "question": "how to foo bar?",
-      "answers": {
-        "id": "sortable_demo",
-        "items": [
-          { "id": "answer_1", "content": "Foo bar" },
-          { "id": "answer_2", "content": "FOo bar" },
-          { "id": "answer_3", "content": "FOO bar" },
-          { "id": "answer_4", "content": "FOO Bar" }
-        ]
-      }
+        "store": [ 'ccm.store', '../resources/question_answers_data.js' ]
     }
   }
 };

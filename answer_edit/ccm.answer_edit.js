@@ -18,7 +18,7 @@
 
       "data": { "store": [ "ccm.store" ] },
 
-      // predefined strings
+      // predefined values
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
         "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
@@ -34,7 +34,8 @@
 
       // '$qa_id$' will be replaced with according values for each question
       "qa_html":
-`<div class="input-group row m-1">
+`
+<div class="input-group row m-1">
   <div class="input-group-prepend col-sm-0 p-1">
     <label for="$qa_id$_question" class="text-secondary">Question</label>
   </div>
