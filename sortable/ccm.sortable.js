@@ -31,7 +31,7 @@
         ]
       },
 
-      'ranking': {}
+      'ranking': []
     },
 
     Instance: function () {
@@ -61,26 +61,27 @@
         const self = this; dataset = await $.dataset( this.data );
 
         // render list items
-        const ul_elem = document.createElement('ul');
-        ul_elem.classList.add('list-group');
+        const ul_elem = document.createElement( 'ul' );
+        ul_elem.classList.add( 'list-group' );
         ul_elem.id = dataset.id;
-        items_elem.appendChild(ul_elem);
+        items_elem.appendChild( ul_elem );
         dataset.items && dataset.items.forEach( renderListItem );
-        Sortable.create(ul_elem, {
-          onSort: function (event) {
-            let tmp = self.ranking[event.newIndex];
-            self.ranking[event.newIndex] = self.ranking[event.oldIndex];
-            self.ranking[event.oldIndex] = tmp;
+        Sortable.create( ul_elem, {
+          onSort: function ( event ) {
+            // remove entry from array at old index
+            const draggedItem = self.ranking.splice( event.oldIndex, 1 )[ 0 ];
+            // insert entry at new index
+            self.ranking.splice( event.newIndex, 0, draggedItem );
           }
-        });
+        } );
 
-        function renderListItem( item_data, i ) {
-          const li_elem = document.createElement('li');
+        function renderListItem( item_data ) {
+          const li_elem = document.createElement( 'li' );
           li_elem.innerHTML = item_data.content;
           li_elem.id = item_data.id;
-          li_elem.classList.add('list-group-item','ui-state-default');
-          ul_elem.appendChild(li_elem);
-          self.ranking[i] = li_elem.id;
+          li_elem.classList.add( 'list-group-item','ui-state-default' );
+          ul_elem.appendChild( li_elem );
+          self.ranking.push( li_elem.id );
         }
       };
 

@@ -31,7 +31,7 @@
         'num_answer': 5,                // number of answers to rank'question_html':
         'question_html':                // default HTML for each question text element
 `
-<div class="input-group row m-1">
+<div class="input-group row m-1 pt-4">
   <div class="input-group-prepend col-sm-0 p-1">
     <label for="q_$q_id$" class="text-secondary">Question</label>
   </div>
@@ -82,6 +82,7 @@
         const self = this;
         let qaData = {};
         let userData;
+        const sortableObjects = {};
 
         // login
         let username;
@@ -139,28 +140,47 @@
           if ( !qaData[ questionId ][ 'answers' ] ) {
             selectedAns = {}
           } else {
-            selectedAns = getAnswers( userData, qaData[ questionId ][ 'answers' ] )
+            selectedAns = getAnswers( userData, questionId )
           }
           const docFrag = await renderAnswerRanking( questionId, selectedAns );
           rankingElem.appendChild( docFrag );
         } );
 
-        // render save button
+        // render save button and notification span
         const saveButton = document.createElement( 'button' );
+        const notificationSpan = document.createElement( 'span' );
         saveButton.innerHTML = 'Save';
-        saveButton.className = 'btn btn-info';
-        saveButton.addEventListener( 'click', () => {
-          console.log( userData );
-        } );
+        saveButton.className = 'btn btn-info m-3 p-2';
+        notificationSpan.className = "alert alert-dismissible";
         submitElem.appendChild( saveButton );
+        submitElem.appendChild( notificationSpan );
 
-        function getAnswers( userData, allAnswers ) {
+        saveButton.addEventListener( 'click', async () => {
+          if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
+          for ( qId in sortableObjects ) {
+            const rankings = sortableObjects[ qId ].getRanking();
+            userData[ 'ranking' ][ qId ] = {};
+            for ( rankNum in rankings ) {
+              userData[ 'ranking' ][ qId ][ rankings[ rankNum ] ] = rankNum;
+            }
+          }
+          await self.data.store.set( userData ).then( () => {
+            notificationSpan.innerText = 'Success';
+            setTimeout( function () {
+              notificationSpan.innerText = '';
+            }, 1000 );  // message disappear after 1 second
+          } );
+        } );  // end saveButton.addEventListener()
+
+        function getAnswers( userData, questionId ) {
           // if the number of ranked answers matches the specified, return these rankings
-          if ( Object.keys( userData[ 'ranking' ] ).length === self.constants.num_answer ) {
-            return userData[ 'ranking' ];
+          if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ]
+               && Object.keys( userData[ 'ranking' ][ questionId ] ).length === self.constants.num_answer ) {
+            return userData[ 'ranking' ][ questionId ];
           }
 
           // else resample
+          let allAnswers = qaData[ questionId ][ 'answers' ][ 'entries' ];
           const answers = {};
           const ansByRankCount = {};
           // first sort answers by rank count
@@ -185,6 +205,7 @@
             } else {
               ansByRankCount[ rankCount ] = [ ansKey ];
             }
+            allAnswers[ ansKey ][ 'ranked_by' ][ username ] = true;
           }
 
           // Fill 'answers' randomly, starting from ones with the least number of ranking
@@ -204,7 +225,7 @@
             }
           }
           return answers;
-        }
+        }  // end getAnswers()
 
         async function renderAnswerRanking( questionId, selectedAnswers ) {
           const qaRankingFragment = document.createDocumentFragment();
@@ -222,6 +243,7 @@
           const answersDiv = qaRankingFragment.querySelector( '#answers' );
           const numAnswers = Object.keys( selectedAnswers ).length;
           if ( numAnswers < self.constants.num_answer ) {
+            // render message about not enough answers for ranking
             answersDiv.className = 'p-3 mb-2 bg-light text-dark';
             answersDiv.innerText = 'can only find ' + numAnswers + ' answer(s) for this question, but we need '
                                    + self.constants.num_answer + ' to rank';
@@ -229,13 +251,14 @@
             // render answers
             let answerEntries = [];
             for ( ansId in selectedAnswers ) {
+              // this assume that selectedAnswers[ ansId ] are unique indices that represent the ranking of answers,
+              // and qaData[ questionId ][ 'answers' ][ ansId ][ 'text' ] contains the answer text
               answerEntries[ selectedAnswers[ ansId ] ] = {
                 'id': ansId,
-                'content': qaData[ questionId ][ 'answers' ][ ansId ][ 'text' ]
+                'content': qaData[ questionId ][ 'answers' ][ 'entries' ][ ansId ][ 'text' ]
               };
             }
-            console.log( answerEntries );
-            await self.comp_sortable.start( {
+            sortableObjects[ questionId ] = await self.comp_sortable.start( {
               root: answersDiv,
               data: { 'id': questionId + '_answers', 'items': answerEntries }
             } );
@@ -243,11 +266,10 @@
 
           return qaRankingFragment;
         }  // end renderAnswerRanking()
-      };
 
-    }
-
-  };
+      };  // end start()
+    }  // end Instance()
+  };  // end component
 
   let b="ccm."+component.name+(component.version?"-"+component.version.join("."):"")+".js";if(window.ccm&&null===window.ccm.files[b])return window.ccm.files[b]=component;(b=window.ccm&&window.ccm.components[component.name])&&b.ccm&&(component.ccm=b.ccm);"string"===typeof component.ccm&&(component.ccm={url:component.ccm});let c=(component.ccm.url.match(/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)||["latest"])[0];if(window.ccm&&window.ccm[c])window.ccm[c].component(component);else{var a=document.createElement("script");document.head.appendChild(a);component.ccm.integrity&&a.setAttribute("integrity",component.ccm.integrity);component.ccm.crossorigin&&a.setAttribute("crossorigin",component.ccm.crossorigin);a.onload=function(){window.ccm[c].component(component);document.head.removeChild(a)};a.src=component.ccm.url}
 } )();

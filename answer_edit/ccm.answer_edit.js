@@ -140,13 +140,16 @@
         renderQAPairs();
 
         // render save button
-        const saveButton = document.createElement( 'button' );
         const notificationSpan = document.createElement( 'span' );
+        const saveButton = document.createElement( 'button' );
         saveElem.appendChild( saveButton );
         saveElem.appendChild( notificationSpan );
+
+        notificationSpan.className = "alert alert-dismissible";
         saveButton.setAttribute( 'type', 'button' );
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
+
         saveButton.addEventListener( 'click', async () => {
           let payload = {
             key : username,
@@ -163,11 +166,10 @@
           });
 
           await self.data.store.set( payload ).then( () => {
-            notificationSpan.innerHTML = 'Success';
-            notificationSpan.className = "alert alert-dismissible";
+            notificationSpan.innerText = 'Success';
             setTimeout( function () {
-              notificationSpan.innerHTML = ' ';
-            }, 1000 );
+              notificationSpan.innerText = '';
+            }, 1000 );  // message disappear after 1 second
           } );
         } );  // end saveButton.addEventListener()
 

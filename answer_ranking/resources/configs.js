@@ -4,6 +4,16 @@
  * @license The MIT License (MIT)
  */
 ccm.files[ 'configs.js' ] = {
+  "localhost": {
+      "key": "localhost",
+      "data": {
+          "store": [ "ccm.store", {
+              "name": "question_answers_sample",
+              "url": "http://localhost:3000", "method": "POST"
+          } ]
+      }
+  },
+
   "local": {
     "key": "local",
     "data": {
