@@ -190,7 +190,7 @@
             if ( numAnswers === self.constants.num_answer ) break;
 
             // skip the user's own answers
-            if ( ansKey in  userData[ 'answers' ] ) continue;
+            if ( ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] ) continue;
 
             // add to 'answers' if this answers is already ranked by the current user
             if ( username in allAnswers[ ansKey ][ 'ranked_by' ] ) {
