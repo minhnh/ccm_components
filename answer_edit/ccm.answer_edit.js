@@ -18,10 +18,11 @@
 
       "data": { "store": [ "ccm.store" ] },
 
-      // predefined strings
+      // predefined values
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_"              // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
+        "truncate_length": 16           // number of characters to keep as ID for hashed answers
       },
 
       "html": {
@@ -33,7 +34,8 @@
 
       // '$qa_id$' will be replaced with according values for each question
       "qa_html":
-`<div class="input-group row m-1">
+`
+<div class="input-group row m-1">
   <div class="input-group-prepend col-sm-0 p-1">
     <label for="$qa_id$_question" class="text-secondary">Question</label>
   </div>
@@ -54,6 +56,12 @@
       'css': [ 'ccm.load',
         { url: '../lib/css/bootstrap.min.css', type: 'css' },
         { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ],
+
+      'js': [
+        'ccm.load', {
+          url: "../lib/js/crypto-js.min.js", type: 'js', context: 'head'
+        }
       ]
     },
 
@@ -123,7 +131,7 @@
                 // if no question on record for this answer, skip entry
                 if ( !qaData[ questionId ] ) return;
 
-                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ];
+                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ][ 'text' ];
               } );
             },
             reason => console.log( reason )             // read from data store failed
@@ -132,13 +140,16 @@
         renderQAPairs();
 
         // render save button
-        const saveButton = document.createElement( 'button' );
         const notificationSpan = document.createElement( 'span' );
+        const saveButton = document.createElement( 'button' );
         saveElem.appendChild( saveButton );
         saveElem.appendChild( notificationSpan );
+
+        notificationSpan.className = "alert alert-dismissible";
         saveButton.setAttribute( 'type', 'button' );
         saveButton.className = "btn btn-info";
         saveButton.innerText = 'Save';
+
         saveButton.addEventListener( 'click', async () => {
           let payload = {
             key : username,
@@ -148,15 +159,17 @@
           Object.keys( qaData ).forEach( ( key ) => {
             const questionIdHtml = self.constants.qa_prefix + key;
             let aId = "textarea#" + questionIdHtml + "_answer";
-            payload.answers[ key ] = contentElem.querySelector( aId ).value;
+            const ansText = contentElem.querySelector( aId ).value;
+            const hashObj = CryptoJS.SHA256( ansText.trim() );
+            const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
+            payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
           });
 
           await self.data.store.set( payload ).then( () => {
-            notificationSpan.innerHTML = 'Success';
-            notificationSpan.className = "alert alert-dismissible";
+            notificationSpan.innerText = 'Success';
             setTimeout( function () {
-              notificationSpan.innerHTML = ' ';
-            }, 1000 );
+              notificationSpan.innerText = '';
+            }, 1000 );  // message disappear after 1 second
           } );
         } );  // end saveButton.addEventListener()
 
