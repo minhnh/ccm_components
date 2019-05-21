@@ -4,19 +4,30 @@
  * @license The MIT License (MIT)
  */
 ccm.files[ 'configs.js' ] = {
-  "demo": {
-    "key": "demo",
-    "data": {
-      "question": "how to foo bar?",
-      "answers": {
-        "id": "sortable_demo",
-        "items": [
-          { "id": "answer_1", "content": "Foo bar" },
-          { "id": "answer_2", "content": "FOo bar" },
-          { "id": "answer_3", "content": "FOO bar" },
-          { "id": "answer_4", "content": "FOO Bar" }
-        ]
+  "digiklausur": {
+      "key": "digiklausur",
+      "data": {
+          "store": [ "ccm.store", {
+              "name": "question_answers_sample",
+              "url": "https://digiklausur.ddns.net", "method": "POST"
+          } ]
       }
+  },
+
+  "localhost": {
+      "key": "localhost",
+      "data": {
+          "store": [ "ccm.store", {
+              "name": "question_answers_sample",
+              "url": "http://localhost:3000", "method": "POST"
+          } ]
+      }
+  },
+
+  "local": {
+    "key": "local",
+    "data": {
+        "store": [ 'ccm.store', '../resources/question_answers_data.js' ]
     }
   }
 };
