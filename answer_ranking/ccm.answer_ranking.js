@@ -107,44 +107,39 @@
         const rankingElem = this.element.querySelector( '#ranking' );
         const submitElem = this.element.querySelector( '#submit' );
 
-        // load questions and answers from store
-        await self.data.store.get( self.constants.key_questions ).then(
-          questions => {
-            questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
-              qaData[ questionId ] = {};
-              qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
-              self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
-                if ( !answers ) {
-                  qaData[ questionId ][ 'answers' ] = {};
-                  return;
-                }
-                qaData[ questionId ][ 'answers' ] = answers;
-              },
-                reason => console.log( reason )               // read from data store failed
-              ).catch( err => console.log( err.message ) );   // unhandled exception
-            } );
-          },
-          reason => console.log( reason )               // read from data store failed
-        ).catch( err => console.log( err.message ) );   // unhandled exception
-
         // load user data
-        await self.data.store.get( username ).then( ud => {
+        self.data.store.get( username ).then( async ud => {
             userData = ud;
+
+            // load questions and answers from store
+            self.data.store.get( self.constants.key_questions ).then(
+              questions => {
+                questions && questions.entries && Object.keys( questions.entries ).forEach( async questionId => {
+                  qaData[ questionId ] = {};
+                  qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
+                  self.data.store.get( self.constants.key_ans_prefix + questionId ).then( async answers => {
+                    if ( !answers ) {
+                      qaData[ questionId ][ 'answers' ] = {};
+                      return;
+                    }
+                    qaData[ questionId ][ 'answers' ] = answers;
+                    // sample answers
+                    selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
+                    // render ranking entry
+                    const docFrag = await renderAnswerRanking( questionId, qaData[ questionId ][ 'question' ],
+                                                         selectedAns, answers[ 'entries' ] );
+                    rankingElem.appendChild( docFrag );
+                  },
+                  reason => console.log( reason )                 // read from data store failed
+                  ).catch( err => console.log( err.message ) );   // unhandled exception
+                } );
+              },
+              reason => console.log( reason )               // read from data store failed
+            ).catch( err => console.log( err.message ) );   // unhandled exception
+
           },
           reason => console.log( reason )               // read from data store failed
         ).catch( err => console.log( err.message ) );   // unhandled exception
-
-        // render question ranking entries
-        Object.keys( qaData ).forEach( async questionId => {
-          let selectedAns;
-          if ( !qaData[ questionId ][ 'answers' ] ) {
-            selectedAns = {}
-          } else {
-            selectedAns = getAnswers( userData, questionId )
-          }
-          const docFrag = await renderAnswerRanking( questionId, selectedAns );
-          rankingElem.appendChild( docFrag );
-        } );
 
         // render save button and notification span
         const saveButton = document.createElement( 'button' );
@@ -172,7 +167,7 @@
           } );
         } );  // end saveButton.addEventListener()
 
-        function getAnswers( userData, questionId ) {
+        function getAnswers( userData, questionId, allAnswers ) {
           // if the number of ranked answers matches the specified, return these rankings
           if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ]
                && Object.keys( userData[ 'ranking' ][ questionId ] ).length === self.constants.num_answer ) {
@@ -180,7 +175,6 @@
           }
 
           // else resample
-          let allAnswers = qaData[ questionId ][ 'answers' ][ 'entries' ];
           const answers = {};
           const ansByRankCount = {};
           // first sort answers by rank count
@@ -228,12 +222,11 @@
           return answers;
         }  // end getAnswers()
 
-        async function renderAnswerRanking( questionId, selectedAnswers ) {
+        async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
           const qaRankingFragment = document.createDocumentFragment();
           $.setContent( qaRankingFragment, $.html( self.html.rank_entry ) );
 
           // render the question area
-          const questionText = qaData[ questionId ][ 'question' ];
           const questionDiv = qaRankingFragment.querySelector( '#question' );
           questionDiv.innerHTML = self.constants.question_html;
           questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$q_id\$/g, questionId );
@@ -256,7 +249,7 @@
               // and qaData[ questionId ][ 'answers' ][ ansId ][ 'text' ] contains the answer text
               answerEntries[ selectedAnswers[ ansId ] ] = {
                 'id': ansId,
-                'content': qaData[ questionId ][ 'answers' ][ 'entries' ][ ansId ][ 'text' ]
+                'content': allAnswers[ ansId ][ 'text' ]
               };
             }
             sortableObjects[ questionId ] = await self.comp_sortable.start( {
