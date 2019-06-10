@@ -1,10 +1,11 @@
 /**
- * @overview TODO
+ * @overview data to configure the components of a course
  * @author Minh Nguyen <minh.nguyen@smail.inf.h-brs.de>
  * @copyright 2019
  * @license The MIT License (MIT)
  */
 ccm.files[ 'dataset.js' ] = {
+  'course_name': 'Course Name',
 
   'home_menu': {
     'key': 'home_menu',
