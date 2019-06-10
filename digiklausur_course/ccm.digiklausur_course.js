@@ -8,7 +8,7 @@
 
   const component = {
 
-    name: 'course_demo',
+    name: 'digiklausur_course',
 
     ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.0.0.min.js',
 

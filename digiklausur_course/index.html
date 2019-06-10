@@ -17,13 +17,13 @@
 <script>
     ccm.load(
         {
-            url: "ccm.course_demo.js", type: "js", context: "head"
+            url: "ccm.digiklausur_course.js", type: "js", context: "head"
         }
     );
 
     // start app
     (async () => {
-        const instance = await ccm.start( 'ccm.course_demo.js' );
+        const instance = await ccm.start( 'ccm.digiklausur_course.js' );
         ccm.helper.setContent( document.body, instance.root );
     })();
 </script>
