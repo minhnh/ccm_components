@@ -8,7 +8,7 @@
 
   const component = {
 
-    name: 'course_demo',
+    name: 'digiklausur_course',
 
     ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.0.0.min.js',
 
@@ -90,15 +90,22 @@
       this.start = async () => {
         let main = $.html(self.html.main);
 
-        setupNavigation();
+        self.dataset.get( 'course_name' ).then( courseName => {
+          document.title = courseName;
+          setupNavigation(courseName);
+        } );
 
         renderArticle();
 
         $.setContent( self.element, main );
 
-        function setupNavigation() {
+        function setupNavigation( courseName ) {
           const header = main.querySelector( '#header' );
           header.innerHTML = self.navigation;
+
+          // setup course name
+          const courseNameLink = header.querySelector( '#course-name' );
+          courseNameLink.innerText = courseName;
 
           // setup toggle button
           header.querySelector( ".navbar-toggler" ).addEventListener( 'click', () => {
