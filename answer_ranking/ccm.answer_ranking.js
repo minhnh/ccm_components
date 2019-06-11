@@ -11,7 +11,7 @@
 
     name: 'answer_ranking',
 
-    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
+    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
 
     config: {
       'data': { 'store': [ 'ccm.store' ] },
@@ -19,7 +19,7 @@
       'comp_sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
 
       'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-8.3.1.js',
+        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 

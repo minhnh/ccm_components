@@ -10,13 +10,13 @@
 
     name: 'digiklausur_course',
 
-    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.0.0.min.js',
+    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
 
     config: {
       // TODO add loggers for menu, user for analytics of click events
 
       'user': [
-          'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-8.3.1.js',
+          'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
           [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 
@@ -25,7 +25,7 @@
       ],
 
       'comp_content': [
-        "ccm.component", "https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.0.js", {
+        "ccm.component", "https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.1.js", {
           config: {
             'css': [
               'ccm.load',
@@ -127,10 +127,13 @@
               signIn.style.display = "none";
               signOut.style.display = "block";
               renderArticle();
-            } ).catch((exception) => console.log( 'login: ' + exception.error) );
+            },
+            reason => {  // login failed
+              console.log( 'login rejected: ' + reason );
+            } ).catch((exception) => console.log( 'login failed: ' + exception.error) );
           } );
 
-          signOut.addEventListener('click', async () => {
+          signOut.addEventListener( 'click', async () => {
             self.user && await self.user.logout().then ( () => {
               username.innerHTML = "";
               signIn.style.display = "block";
@@ -147,14 +150,12 @@
         function renderArticle(pageName = 'home') {
           const article = main.querySelector( '#article' );
 
-          if (!self.user || !self.user.isLoggedIn()) {
+          if ( !self.user || !self.user.isLoggedIn() ) {
             article.innerHTML = '<div class="alert alert-info" role="alert">\n' +
                 '  Please login to continue!\n' +
                 '</div>';
             return;
           }
-
-          // TODO: confirm authentication
 
           switch (pageName) {
             case 'home':
