@@ -2,17 +2,21 @@
   path: sortable
   description: List with sortable items
 
+- name: ccm.answer_edit.js
+  path: answer_edit
+  description: View for answering questions
+
 - name: ccm.answer_ranking.js
   path: answer_ranking
   description: Rank answers for a question
 
+- name: ccm.answer_scores.js
+  path: answer_scores
+  description: Calculate answers' scores from their rankings
+
 - name: ccm.question_edit.js
   path: question_edit
   description: View for adding questions
-
-- name: ccm.answer_edit.js
-  path: answer_edit
-  description: View for answering questions
 
 - name: ccm.question_answer.js
   path: question_answer
