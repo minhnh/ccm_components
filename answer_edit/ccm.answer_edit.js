@@ -10,9 +10,11 @@
 
     name: 'answer_edit',
 
+    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
+
     config: {
       'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-8.3.1.js',
+        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 
@@ -64,8 +66,6 @@
         }
       ]
     },
-
-    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
 
     Instance: function () {
 
