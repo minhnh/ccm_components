@@ -20,16 +20,8 @@ ccm.files[ 'dataset.js' ] = {
 
         'entries': [
           {
-            'title': 'Edit Questions or Answers',
+            'title': 'Questions and Answers',
             'content': [ 'ccm.instance', '../question_answer/ccm.question_answer.js' ]
-          },
-          {
-            'title': 'Question Edit View',
-            'content': [ 'ccm.instance', '../question_edit/ccm.question_edit.js' ]
-          },
-          {
-            'title': 'Answer Edit View',
-            'content': [ 'ccm.instance', '../answer_edit/ccm.answer_edit.js' ]
           }
         ]
       },
@@ -43,12 +35,8 @@ ccm.files[ 'dataset.js' ] = {
 
         'entries': [
           {
-            'title': 'Question Edit View',
-            'content': [ 'ccm.instance', '../question_edit/ccm.question_edit.js' ]
-          },
-          {
-            'title': 'Answer Edit View',
-            'content': [ 'ccm.instance', '../answer_edit/ccm.answer_edit.js' ]
+            'title': 'Questions and Answers',
+            'content': [ 'ccm.instance', '../question_answer/ccm.question_answer.js' ]
           }
         ]
       }
