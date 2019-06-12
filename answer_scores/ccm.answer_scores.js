@@ -32,6 +32,7 @@
           "id": "main",
           "inner": [
             {
+              // table headers
               "id": "title-row",
               "class": "row text-info",
               "inner": [
@@ -48,10 +49,12 @@
               ]
             },
             {
+              // table content
               "id": "content-row",
               "class": "row",
               "inner": [
                 {
+                  // question column containing control tabs
                   "id": "question-col",
                   "class": "col-4 ml-3 p-2",
                   "inner": [
@@ -63,6 +66,7 @@
                   ]
                 },
                 {
+                  // answer column containing answers and their scores
                   "id": "answer-col",
                   "class": "col-6 p-2",
                   "inner": [
@@ -97,6 +101,7 @@
         // get dataset for rendering
         const self = this;
 
+        const isQuestionSelected = {};
 
         // render main HTML structure
         $.setContent( self.element, $.html( self.html.main ) );
@@ -120,7 +125,8 @@
                   }
 
                   const isActive = ( index === 0 ) ? true : false;
-                  renderQA( questions.entries[ questionId ], answers.entries, isActive );
+                  isQuestionSelected[ questionId ] = isActive;
+                  renderQA( questionId, questions.entries[ questionId ], answers.entries, isActive );
                 },
                 reason => console.log( 'get answers rejected: ' + reason )
                 ).catch( err => console.log( 'get answers failed: ' + err.error ) );
@@ -133,17 +139,55 @@
           console.log( 'login rejected: ' + reason );
         } ).catch( ( exception ) => console.log( 'login failed: ' + exception.error ) );
 
-        function renderQA( questionText, answers, isActive ) {
-          questionTabsDiv.appendChild( getQuestionTab( questionText, isActive ) );
+        function renderQA( questionId, questionText, answers, isActive ) {
+          questionTabsDiv.appendChild( getQuestionTab( questionId, questionText, isActive ) );
           console.log(answers);
         }  // end renderQA()
 
-        function getQuestionTab( questionText, isActive ) {
+        function getQuestionTab( questionId, questionText, isActive ) {
           const questionTab = document.createElement( 'a' );
-          questionTab.className = 'list-group-item list-group-item-action flex-column align-items-start';
-          if ( isActive ) questionTab.className += ' active text-light';
+          questionTab.id = getQuestionTabId( questionId );
+          setQuestionTabActive( questionTab, isActive );
           questionTab.innerHTML = questionText;
+          questionTab.addEventListener( 'click', ( event ) => {
+            event.preventDefault();
+
+            // skip event if tab already selected
+            if ( isQuestionSelected[ questionId ] ) return;
+
+            // set clicked question tab to active and show corresponding answer panel, update 'isQuestionSelected'
+            setQuestionTabActive( event.srcElement, true );
+            isQuestionSelected[ questionId ] = true;
+            const ansPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( questionId ) )
+            // TODO(minhnh) setAnsPanelActive()
+
+            // set other question tabs to inactive and hide their answer panels
+            for ( checkQuestionId in isQuestionSelected ) {
+              // skip current question
+              if ( checkQuestionId === questionId ) continue;
+
+              // skip if the checked question is not currently selected
+              if ( !isQuestionSelected[ checkQuestionId ] ) continue;
+
+              // update previously active tab and answer panel
+              const checkQTab = questionTabsDiv.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
+              setQuestionTabActive( checkQTab, false );
+              const checkAnsPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
+              // TODO setAnsPanelActive()
+              isQuestionSelected[ checkQuestionId ] = false;
+            }
+          } );
           return questionTab;
+        }
+
+        function getQuestionTabId( questionId ) { return 'q_' + questionId }
+
+        function getAnswerPanelId( questionId ) { return 'a_' + questionId }
+
+        function setQuestionTabActive( qTabElem, isActive ) {
+          const questionTabClasses = 'list-group-item list-group-item-action flex-column align-items-start';
+          qTabElem.className = isActive ? questionTabClasses + ' active text-light'
+                                        : questionTabClasses;
         }
 
       };  // end start
