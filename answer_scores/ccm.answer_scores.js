@@ -33,17 +33,17 @@
           "inner": [
             {
               "id": "title-row",
-              "class": "row",
+              "class": "row text-info",
               "inner": [
                 {
                   "id": "question-title-col",
-                  "class": "col-4 p-2 ml-3 table-primary",
-                  "inner": "<h4>Questions</h4>"
+                  "class": "col-4 ml-3 mr-1 list-group-item",
+                  "inner": "<h5>Questions</h5>"
                 },
                 {
                   "id": "answer-title-col",
-                  "class": "col-6 p-2 table-primary",
-                  "inner": "<h4>Answers</h4>"
+                  "class": "col-6 p-2 list-group-item",
+                  "inner": "<h5>Answers</h5>"
                 }
               ]
             },
@@ -81,12 +81,6 @@
       'css': [ 'ccm.load',
         { url: '../lib/css/bootstrap.min.css', type: 'css' },
         { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
-
-      'js': [ 'ccm.load', [
-          { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
-          { url: '../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
-        ]
       ],
     },
 
@@ -147,7 +141,7 @@
         function getQuestionTab( questionText, isActive ) {
           const questionTab = document.createElement( 'a' );
           questionTab.className = 'list-group-item list-group-item-action flex-column align-items-start';
-          if ( isActive ) questionTab.className += ' active';
+          if ( isActive ) questionTab.className += ' active text-light';
           questionTab.innerHTML = questionText;
           return questionTab;
         }
