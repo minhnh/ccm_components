@@ -34,9 +34,8 @@
                     'component': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ]
                 },
                 'answer_scores': {
-                    // TODO(minhnh): replace with actual answer_scores component
                     'name': 'Ranking Scores',
-                    'component': [ 'ccm.component', 'https://ccmjs.github.io/akless-components/blank/ccm.blank.js' ]
+                    'component': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ]
                 }
             },
 
