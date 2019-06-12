@@ -88,6 +88,9 @@
         let username;
         self.user && await self.user.login().then ( () => {
           username = self.user.data().user;
+        },
+        reason => {  // login failed
+          console.log( 'login rejected: ' + reason );
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
@@ -168,28 +171,43 @@
         } );  // end saveButton.addEventListener()
 
         function getAnswers( userData, questionId, allAnswers ) {
-          // if the number of ranked answers matches the specified, return these rankings
-          if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ]
-               && Object.keys( userData[ 'ranking' ][ questionId ] ).length === self.constants.num_answer ) {
-            return userData[ 'ranking' ][ questionId ];
+          // collection of selected answers to return
+          const answers = {};
+
+          // keep track of which indices already used
+          const indiceAvailable = {};
+          for ( indice in [ ...Array( self.constants.num_answer ).keys() ] ) indiceAvailable[indice] = true;
+
+          // fill the user's ranked answers which are available in 'allAnswers'
+          // this ensures updated answers to be resampled, and old ones to be discarded
+          if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ] ) {
+            for ( rankedAnsKey in userData[ 'ranking' ][ questionId ] ) {
+              if ( !( rankedAnsKey in allAnswers ) ) continue;
+              const rankIndex = userData[ 'ranking' ][ questionId ][ rankedAnsKey ];
+              answers[ rankedAnsKey ] = rankIndex;
+              delete indiceAvailable[ rankIndex ];
+            }
           }
 
-          // else resample
-          const answers = {};
+          // sort answers by rank count
           const ansByRankCount = {};
-          // first sort answers by rank count
           for ( ansKey in allAnswers ) {
-            const numAnswers = Object.keys( answers ).length;
             // if there are enough entries in 'answers', stop the loop
-            if ( numAnswers === self.constants.num_answer ) break;
+            if ( Object.keys( answers ).length === self.constants.num_answer ) break;
 
             // skip the user's own answers
             if ( userData[ 'answers' ][ questionId ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
               continue;
 
-            // add to 'answers' if this answers is already ranked by the current user
-            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] ) {
-              answers[ ansKey ] = numAnswers;
+            // skip if answer is already considered
+            if ( ansKey in answers ) continue;
+
+            // add to 'answers' if this answers is already ranked by the current user, unlikely to be here
+            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] && Object.keys( indiceAvailable ).length !==0 ) {
+              // pop the first available rank index to store in 'answers'
+              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
+              answers[ ansKey ] = rankIndex;
+              delete indiceAvailable[ rankIndex ]
               continue;
             }
 
@@ -201,11 +219,12 @@
               ansByRankCount[ rankCount ] = [ ansKey ];
             }
             allAnswers[ ansKey ][ 'ranked_by' ][ username ] = true;
-          }
+          }  // end sorting answers by rank count
 
           // Fill 'answers' randomly, starting from ones with the least number of ranking
           for ( rankCount in Object.keys( ansByRankCount ).sort() ) {
             let ansCount = Object.keys( answers ).length;
+
             // if there are enough entries in 'answers', stop the loop
             if ( ansCount === self.constants.num_answer ) break;
 
@@ -213,12 +232,20 @@
             // number of ranking, randomly add more entries to 'answers'
             const answerKeys = ansByRankCount[ rankCount ];
             while ( ansCount < self.constants.num_answer && answerKeys.length > 0 ) {
+              // sample random answer
               const randIndex = Math.floor( Math.random() * answerKeys.length );
               const selectedAnsKey = answerKeys.splice( randIndex, 1 )[ 0 ];
-              answers[ selectedAnsKey ] = ansCount;
+
+              // pop the first available rank index to store in 'answers'
+              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
+              answers[ selectedAnsKey ] = rankIndex;
+              delete indiceAvailable[ rankIndex ]
+
+              // update 'ansCount'
               ansCount = Object.keys( answers ).length;
             }
-          }
+          }  // end sampling for answers
+
           return answers;
         }  // end getAnswers()
 
