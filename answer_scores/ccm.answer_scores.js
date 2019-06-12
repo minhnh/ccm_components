@@ -141,13 +141,19 @@
 
         function renderQA( questionId, questionText, answers, isActive ) {
           questionTabsDiv.appendChild( getQuestionTab( questionId, questionText, isActive ) );
-          console.log(answers);
+          answerPanelDiv.appendChild( getAnswerPanel( questionId, answers, isActive ) );
         }  // end renderQA()
 
         function getQuestionTab( questionId, questionText, isActive ) {
           const questionTab = document.createElement( 'a' );
           questionTab.id = getQuestionTabId( questionId );
           setQuestionTabActive( questionTab, isActive );
+          setAttributes( questionTab, {
+            'data-toggle': "list",
+            'href': '#' + getAnswerPanelId( questionId ),
+            'role': 'tab',
+            'aria-controls': getAnswerPanelId( questionId )
+          } );
           questionTab.innerHTML = questionText;
           questionTab.addEventListener( 'click', ( event ) => {
             event.preventDefault();
@@ -159,7 +165,7 @@
             setQuestionTabActive( event.srcElement, true );
             isQuestionSelected[ questionId ] = true;
             const ansPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( questionId ) )
-            // TODO(minhnh) setAnsPanelActive()
+            setAnsPanelActive( ansPanel, true );
 
             // set other question tabs to inactive and hide their answer panels
             for ( checkQuestionId in isQuestionSelected ) {
@@ -173,12 +179,29 @@
               const checkQTab = questionTabsDiv.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
               setQuestionTabActive( checkQTab, false );
               const checkAnsPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
-              // TODO setAnsPanelActive()
+              setAnsPanelActive( checkAnsPanel, false );
               isQuestionSelected[ checkQuestionId ] = false;
             }
           } );
           return questionTab;
-        }
+        }  // end getQuestionTab()
+
+        function getAnswerPanel( questionId, answers, isActive ) {
+          const ansPanelDiv = document.createElement( 'div' );
+          ansPanelDiv.id = getAnswerPanelId( questionId );
+          setAnsPanelActive( ansPanelDiv, isActive );
+          setAttributes( ansPanelDiv, {
+              'role': 'tabpanel',
+              'aria-labelledby': getQuestionTabId( questionId )
+          } );
+
+          for ( ansId in answers ) {
+            const ansDiv = document.createElement( 'div' );
+            ansDiv.innerText = answers[ ansId ].text;
+            ansPanelDiv.appendChild( ansDiv );
+          }
+          return ansPanelDiv;
+        }  // getAnswerPanel()
 
         function getQuestionTabId( questionId ) { return 'q_' + questionId }
 
@@ -186,9 +209,19 @@
 
         function setQuestionTabActive( qTabElem, isActive ) {
           const questionTabClasses = 'list-group-item list-group-item-action flex-column align-items-start';
-          qTabElem.className = isActive ? questionTabClasses + ' active text-light'
+          qTabElem.className = isActive ? questionTabClasses + ' active'
                                         : questionTabClasses;
-        }
+        }  // end setQuestionTabActive()
+
+        function setAnsPanelActive( ansPanelElem, isActive ) {
+          ansPanelElem.className = isActive ? 'tab-pane fade show active' : 'tab-pane fade';
+        }  // end setAnsPanelActive()
+
+        function setAttributes( element, attribtues ) {
+            for ( var key in attribtues ) {
+                element.setAttribute(key, attribtues[key]);
+            }
+        }  // end setAttributes()
 
       };  // end start
 
