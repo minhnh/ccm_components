@@ -34,9 +34,8 @@
                     'component': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ]
                 },
                 'answer_scores': {
-                    // TODO(minhnh): replace with actual answer_scores component
                     'name': 'Ranking Scores',
-                    'component': [ 'ccm.component', 'https://ccmjs.github.io/akless-components/blank/ccm.blank.js' ]
+                    'component': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ]
                 }
             },
 
@@ -50,16 +49,13 @@
               { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
             ],
 
-            'js': [ 'ccm.load', [
-                { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
-                { url: '../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
-              ]
-            ],
-
             "html": {
               'main': [
                 { 'id': 'qa-tabs' },
-                { 'id': 'qa-content' }
+                {
+                    'id': 'qa-content',
+                    'class': 'tab-content'
+                }
               ]
             },
         },
@@ -89,10 +85,7 @@
                 tabUlElem.id = 'qa-tabs-ul';
                 tabUlElem.className = 'nav nav-tabs'
                 tabUlElem.setAttribute( 'role', 'tablist' );
-                tabElem.appendChild(tabUlElem);
-                // setup bootstrap content div
-                contentElem.className = 'tab-content';
-                contentElem.id = 'qa-tabs-content';
+                tabElem.appendChild( tabUlElem );
 
                 // login
                 self.user && await self.user.login().then( () => {
@@ -145,14 +138,13 @@
 
                     const aElem = document.createElement( 'a' );
                     aElem.innerText = viewName;
-                    aElem.className = isActive ? 'nav-link active' : 'nav-link';
-                    aElem.id = viewKey + '-tab';
+                    aElem.id = getViewTabId( viewKey );
+                    setViewTabActive( aElem, isActive );
                     setAttributes( aElem, {
                         'data-toggle': 'tab',
-                        'href': '#' + viewKey + '-panel',
+                        'href': '#' + getViewPanelId( viewKey ),
                         'role': 'tab',
-                        'aria-controls': viewKey + '-panel',
-                        'aria-selected': isActive ? 'true' : 'false'
+                        'aria-controls': getViewPanelId( viewKey )
                     } );
                     aElem.addEventListener( 'click', ( e ) => {
                         e.preventDefault();
@@ -163,14 +155,13 @@
 
                         Object.keys( isViewActive ).forEach( checkViewKey => {
 
-                            const checkPanel = contentElem.querySelector( '#' + checkViewKey + '-panel' );
+                            const checkPanel = contentElem.querySelector( '#' + getViewPanelId( checkViewKey ) );
 
                             // view tab & panel for current viewKey
                             if ( checkViewKey === viewKey ) {
                                 isViewActive[ checkViewKey ] = true;
-                                aElem.className = 'nav-link active';
-                                aElem.setAttribute( 'aria-selected', 'true' );
-                                checkPanel.className = 'tab-pane fade show active';
+                                setViewTabActive( aElem, true );
+                                setViewPanelActive( checkPanel, true );
                                 return;
                             }
 
@@ -179,10 +170,9 @@
 
                             // hide tab & panel of previously active viewKey
                             isViewActive[ checkViewKey ] = false;
-                            const checkTab = tabUlElem.querySelector( '#' + checkViewKey + '-tab' );
-                            checkTab.className = 'nav-link';
-                            checkTab.setAttribute( 'aria-selected', 'false' );
-                            checkPanel.className = 'tab-pane fade';
+                            const checkTab = tabUlElem.querySelector( '#' + getViewTabId( checkViewKey ) );
+                            setViewTabActive( checkTab, false );
+                            setViewPanelActive( checkPanel, false );
                         } );
                     } );
 
@@ -193,11 +183,11 @@
                 function getMenuPanel( viewKey, viewComp, isActive ) {
                     // largely based on bootstrap tab menu example, load CCM component in the panel
                     const divElem = document.createElement( 'div' );
-                    divElem.className = isActive ? 'tab-pane fade show active' : 'tab-pane fade';
-                    divElem.id = viewKey + '-panel';
+                    divElem.id = getViewPanelId( viewKey );
+                    setViewPanelActive( divElem, isActive );
                     setAttributes( divElem, {
                         'role': 'tabpanel',
-                        'aria-labelledby': viewKey + '-tab'
+                        'aria-labelledby': getViewTabId( viewKey )
                     } );
                     viewComp.start( { root: divElem, data: self.data } );
                     return divElem;
@@ -208,6 +198,19 @@
                         element.setAttribute(key, attribtues[key]);
                     }
                 }
+
+                function setViewTabActive( viewTabElem, isActive ) {
+                    viewTabElem.className = isActive ? 'nav-link active' : 'nav-link';
+                    viewTabElem.setAttribute( 'aria-selected', isActive ? 'true' : 'false' );
+                }
+
+                function setViewPanelActive( viewPanelElem, isActive ) {
+                    viewPanelElem.className = isActive ? 'tab-pane fade show active' : 'tab-pane fade';
+                }
+
+                function getViewTabId( viewKey ) { return viewKey + '-tab' }
+
+                function getViewPanelId( viewKey ) { return viewKey + '-panel' }
             };
         }
     };
