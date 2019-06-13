@@ -25,6 +25,7 @@
         'key_questions': 'questions',   // key of store document containing question entries
         'key_ans_prefix': 'answers_',   // question ID's will be appended to this to create the name of the document
                                         // containing the question's answers
+        'score_decimal_points': 3
       },
 
       'html': {
@@ -281,7 +282,7 @@
               ansScore += 1 - normalizedRank;
             } );
             ansScore /= numRankings;
-            ansScore = ansScore.toFixed( 4 );
+            ansScore = ansScore.toFixed( self.constants.score_decimal_points );
 
             // add answer info to 'answersByRankings'
             const ansInfo = { 'text': answers[ ansId ].text, 'numRankings': numRankings };
