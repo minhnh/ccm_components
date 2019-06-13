@@ -33,9 +33,9 @@ ccm.files[ 'question_answers_data.js' ] = {
     "answers_9c7d5b046878838d": {
         "entries": {
             "d97363b4cb5ce806": { "text": "es geht", "ranked_by": {} },
-            "answer_hash_01": { "text": "es geht 1", "ranked_by": { 'username01': true } },
-            "answer_hash_02": { "text": "es geht 2", "ranked_by": { 'username02': true } },
-            "answer_hash_03": { "text": "es geht 3", "ranked_by": { 'username01': true } },
+            "answer_hash_01": { "text": "es geht 1", "ranked_by": { 'username01': 0.2 } },
+            "answer_hash_02": { "text": "es geht 2", "ranked_by": { 'username02': 0.6, 'username01': 0.4 } },
+            "answer_hash_03": { "text": "es geht 3", "ranked_by": { 'username01': 0.4, 'username03': 0.2 } },
             "answer_hash_04": { "text": "es geht 4", "ranked_by": {} },
             "answer_hash_05": { "text": "es geht 5", "ranked_by": {} }
         }
@@ -43,9 +43,9 @@ ccm.files[ 'question_answers_data.js' ] = {
 
     "answers_51ebe90aeed77259": {
         "entries": {
-            "807a4f302e7bbba1": { "text": "I don't know", "ranked_by": { 'username01': true } },
-            "answer_hash_06": { "text": "I don't know 1", "ranked_by": { 'username02': true } },
-            "answer_hash_07": { "text": "I don't know 2", "ranked_by": { 'username02': true } },
+            "807a4f302e7bbba1": { "text": "I don't know", "ranked_by": { 'username01': 0.0 } },
+            "answer_hash_06": { "text": "I don't know 1", "ranked_by": { 'username02': 0.2, 'username01': 0.6 } },
+            "answer_hash_07": { "text": "I don't know 2", "ranked_by": { 'username02': 1.0, 'username03': 0.6 } },
             "answer_hash_08": { "text": "I don't know 3", "ranked_by": {} },
             "answer_hash_09": { "text": "I don't know 4", "ranked_by": {} },
             "answer_hash_10": { "text": "I don't know 5", "ranked_by": {} }
