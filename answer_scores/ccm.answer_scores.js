@@ -35,51 +35,81 @@
               // table headers
               "id": "title-row",
               "class": "row text-info",
-              "inner": [
-                {
-                  "id": "question-title-col",
-                  "class": "col-4 ml-3 mr-1 list-group-item",
-                  "inner": "<h5>Questions</h5>"
-                },
-                {
-                  "id": "answer-title-col",
-                  "class": "col-6 p-2 list-group-item",
-                  "inner": "<h5>Answers</h5>"
-                }
-              ]
-            },
+              "inner": [ {
+                "id": "question-title-col",
+                "class": "col-4 ml-3 mr-1 list-group-item",
+                "inner": "<h5>Questions</h5>"
+              }, {
+                "id": "answer-title-col",
+                "class": "col-6 p-2 list-group-item",
+                "inner": "<h5>Answers</h5>"
+              } ]
+            },  // end title-row
+
             {
-              // table content
+              // table content, containing question tabs and a panel for answers
               "id": "content-row",
               "class": "row",
-              "inner": [
-                {
-                  // question column containing control tabs
-                  "id": "question-col",
-                  "class": "col-4 ml-3 p-2",
-                  "inner": [
-                    {
-                      "id": "question-tabs",
-                      "class": "list-group",
-                      "role": "tablist"
-                    }
-                  ]
-                },
-                {
-                  // answer column containing answers and their scores
-                  "id": "answer-col",
-                  "class": "col-6 p-2",
-                  "inner": [
-                    {
-                      "id": "answer-panel",
-                      "class": "tab-content"
-                    }
-                  ]
-                }
-              ]
-            }
+              "inner": [ {
+                // question column containing control tabs
+                "id": "question-col",
+                "class": "col-4 ml-3 p-2",
+                "inner": [ {
+                  "id": "question-tabs",
+                  "class": "list-group",
+                  "role": "tablist"
+                } ]
+              }, {
+                // answer column containing answers and their scores
+                "id": "answer-col",
+                "class": "col-6 p-2",
+                "inner": [ {
+                  "id": "answer-panel",
+                  "class": "tab-content"
+                } ]
+              } ]
+            }  // end content-row
+          ]  // end main.inner
+        },  // end main
+
+        // HTML configs of a table which displays answer and scores
+        'answer_table': {
+          'class': 'table table-hover',
+          'tag': 'table',
+          'inner': [
+            // table header
+            {
+              'class': 'answer-table-head',
+              'tag': 'thead',
+              'inner': [ {
+                'tag': 'tr',
+                'inner': [
+                  // 4 columns
+                  { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
+                  { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
+                  { 'tag': 'th', 'class': 'col-1', 'inner': 'Score' },
+                  { 'tag': 'th', 'class': 'col-1', 'inner': '# rankings' },
+                ]
+              } ]
+            },
+            // table body
+            {
+              'class': 'answer-table-body',
+              'tag': 'tbody'
+            },
           ]
-        }
+        },  // end answer_table
+
+        // HTML configs of a row containing answer info
+        'answer_row': {
+          'tag': 'tr',
+          'inner': [
+            { 'tag': 'th', 'class': 'answer-row-index' },
+            { 'tag': 'td', 'class': 'answer-row-text' },
+            { 'tag': 'td', 'class': 'answer-row-score' },
+            { 'tag': 'td', 'class': 'answer-row-num-ranking' },
+          ]
+        }  // end answer_row
       },
 
       'css': [ 'ccm.load',
@@ -129,7 +159,7 @@
                   renderQA( questionId, questions.entries[ questionId ], answers.entries, isActive );
                 },
                 reason => console.log( 'get answers rejected: ' + reason )
-                ).catch( err => console.log( 'get answers failed: ' + err.error ) );
+                ).catch( err => console.log( 'get answers failed: ' + err ) );
               } );
             },
             reason => console.log( 'get questions rejected: ' + reason )
@@ -187,21 +217,82 @@
         }  // end getQuestionTab()
 
         function getAnswerPanel( questionId, answers, isActive ) {
+          // create answer panel
           const ansPanelDiv = document.createElement( 'div' );
           ansPanelDiv.id = getAnswerPanelId( questionId );
           setAnsPanelActive( ansPanelDiv, isActive );
           setAttributes( ansPanelDiv, {
-              'role': 'tabpanel',
-              'aria-labelledby': getQuestionTabId( questionId )
+            'role': 'tabpanel',
+            'aria-labelledby': getQuestionTabId( questionId )
           } );
 
-          for ( ansId in answers ) {
-            const ansDiv = document.createElement( 'div' );
-            ansDiv.innerText = answers[ ansId ].text;
-            ansPanelDiv.appendChild( ansDiv );
-          }
+          // create and fill answer table
+          const ansTable = $.html( self.html.answer_table );
+          ansPanelDiv.appendChild( ansTable );
+          const ansTableBody = ansTable.querySelector( '.answer-table-body' );
+
+          // organize answer scores, fill table rows by descending scores
+          const ansScores = organizeAnswerScores( answers );
+          let ansIndex = 1;
+          Object.keys( ansScores.ansByScore ).sort( ( a, b ) => b - a ).forEach( score => {
+            ansScores.ansByScore[ score ].forEach( ansInfo => {
+              const ansRow = $.html( self.html.answer_row );
+              fillAnswerTableRow( ansRow, ansIndex, ansInfo.text, score, ansInfo.numRankings );
+              ansTableBody.appendChild( ansRow );
+              ansIndex += 1;
+            } );
+          } );
+
+          ansScores.unranked.forEach( ansText => {
+            const ansRow = $.html( self.html.answer_row );
+            fillAnswerTableRow( ansRow, ansIndex, ansText, 'unranked', 0 );
+            ansTableBody.appendChild( ansRow );
+            ansIndex += 1;
+          } );
           return ansPanelDiv;
         }  // getAnswerPanel()
+
+        function fillAnswerTableRow( answerRowElem, ansIndex, ansText, score, numRankings ) {
+          const ansIndexCell = answerRowElem.querySelector( 'th.answer-row-index' );
+          const ansTextCell = answerRowElem.querySelector( 'td.answer-row-text' );
+          const ansScoreCell = answerRowElem.querySelector( 'td.answer-row-score' );
+          const ansNumRankingCell = answerRowElem.querySelector( 'td.answer-row-num-ranking' );
+
+          ansIndexCell.innerHTML = ansIndex;
+          ansTextCell.innerHTML = ansText;
+          ansScoreCell.innerHTML = score;
+          ansNumRankingCell.innerHTML = numRankings;
+        }
+
+        function organizeAnswerScores( answers ) {
+          // sort answers by their score
+          const answerScores = { 'unranked': [], 'ansByScore': {} }
+          for ( ansId in answers ) {
+            // seperate the unranked answer
+            const numRankings = Object.keys( answers[ ansId ].ranked_by ).length;
+            if ( numRankings === 0 ) {
+              answerScores.unranked.push( answers[ ansId ].text );
+              continue;
+            }
+
+            // calculate score: average of all (1 - normalizedRanking)
+            let ansScore = 0;
+            Object.values( answers[ ansId ].ranked_by ).forEach( normalizedRank => {
+              ansScore += 1 - normalizedRank;
+            } );
+            ansScore /= numRankings;
+            ansScore = ansScore.toFixed( 4 );
+
+            // add answer info to 'answersByRankings'
+            const ansInfo = { 'text': answers[ ansId ].text, 'numRankings': numRankings };
+            if ( ansScore in answerScores.ansByScore ) {
+              answerScores.ansByScore[ ansScore ].push( ansInfo );
+            } else {
+              answerScores.ansByScore[ ansScore ] = [ ansInfo ];
+            }
+          }
+          return answerScores;
+        }  // end getAnswerScores()
 
         function getQuestionTabId( questionId ) { return 'q_' + questionId }
 
