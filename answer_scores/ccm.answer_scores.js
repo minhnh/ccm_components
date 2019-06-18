@@ -88,8 +88,8 @@
                   // 4 columns
                   { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
                   { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
-                  { 'tag': 'th', 'class': 'col-1', 'inner': 'Score' },
-                  { 'tag': 'th', 'class': 'col-1', 'inner': '# rankings' },
+                  { 'tag': 'th', 'class': 'col-1 text-center', 'inner': 'Score' },
+                  { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '# rankings' },
                 ]
               } ]
             },
@@ -107,8 +107,8 @@
           'inner': [
             { 'tag': 'th', 'class': 'answer-row-index' },
             { 'tag': 'td', 'class': 'answer-row-text' },
-            { 'tag': 'td', 'class': 'answer-row-score' },
-            { 'tag': 'td', 'class': 'answer-row-num-ranking' },
+            { 'tag': 'td', 'class': 'answer-row-score text-center' },
+            { 'tag': 'td', 'class': 'answer-row-num-ranking text-center' },
           ]
         }  // end answer_row
       },

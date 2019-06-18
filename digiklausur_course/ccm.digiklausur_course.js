@@ -29,8 +29,8 @@
           config: {
             'css': [
               'ccm.load',
-              { url: '../lib/css/bootstrap.min.css', type: 'css' },
-              { url: '../lib/css/fontawesome-all.min.css', type: 'css' }
+              { url: '/lib/css/bootstrap.min.css', type: 'css' },
+              { url: '/lib/css/fontawesome-all.min.css', type: 'css' }
             ],
           }
         }
@@ -39,15 +39,15 @@
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
       'css': [ 'ccm.load',
-        { url: '../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' },
-        { url: '../lib/css/fontawesome-all.min.css', type: 'css' },
-        { url: '../lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
+        { url: '/lib/css/bootstrap.min.css', type: 'css' },
+        { url: '/lib/css/bootstrap.min.css', type: 'css', context: 'head' },
+        { url: '/lib/css/fontawesome-all.min.css', type: 'css' },
+        { url: '/lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [ 'ccm.load', [
-          { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
-          { url: '../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
+          { url: '/lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
+          { url: '/lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
         ]
       ],
 
@@ -66,10 +66,77 @@
             { 'id': 'section' },
             { 'id': 'menu-list' }
           ]
-        }
-      },
+        },
 
-      'navigation': [ 'ccm.load', { url: 'resources/navigation.html', type: 'data', method: 'get' } ]
+        'navigation': {
+          'tag': 'nav',
+          'class': 'navbar navbar-expand-md navbar-dark bg-info',
+          'id': 'navigation-bar',
+          'inner': [
+            // navbar brand
+            { 'tag': 'a', 'class': "navbar-brand", 'href': "#", 'id': "course-name" },
+
+            // collapsible button for when screen width is small
+            {
+              'tag': 'button', 'class': 'navbar-toggler', 'type': 'button', 'data-toggle': 'collapse',
+              'data-target': '#navbarSupportedContent', 'aria-controls': 'navbarSupportedContent',
+              'aria-expanded': 'false', 'aria-label': 'Toggle navigation',
+              'inner': [ { 'tag': 'span', 'class': 'navbar-toggler-icon' } ]
+            },
+
+            // collapsible content div
+            {
+              'class': 'collapse navbar-collapse',
+              'id': 'navbarSupportedContent',
+              'inner': [
+                // left side navigation buttons
+                {
+                  'tag': 'ul', 'class': 'navbar-nav mr-auto',
+                  'inner': [
+                    // Home button
+                    {
+                      'tag': 'li', 'class': 'nav-item active',
+                      'inner': [ {
+                        'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Home', 'id': 'home',
+                        'inner': '<i class="fa fa-home"></i><span class="sr-only">Home</span>'
+                      } ]
+                    },
+                    // Help button
+                    {
+                      'tag': 'li', 'class': 'nav-item',
+                      'inner': [ {
+                        'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Help', 'id': 'help',
+                        'inner': '<i class="fa fa-info-circle"></i><span class="sr-only">Help</span>'
+                      } ]
+                    }
+                  ]
+                },
+                // username field and login/logout buttons to the right
+                {
+                  'tag': 'ul', 'class': 'navbar-nav',
+                  'inner': [
+                    { 'tag': 'li', 'class': 'nav-item', 'inner': '<span id="username"></span>' },
+                    {  // sign-in button
+                      'tag': 'li', 'class': 'nav-item',
+                      'inner': {
+                        'tag': 'button', 'type': 'button', 'class': 'btn btn-light', 'id': 'sign-in',
+                        'inner': 'Sign in'
+                      }
+                    },
+                    {  // initially hidden sign-out button
+                      'tag': 'li', 'class': 'nav-item',
+                      'inner': {
+                        'tag': 'button', 'type': 'button', 'class': 'btn btn-light', 'id': 'sign-out',
+                        'style': 'display: none', 'inner': 'Sign out'
+                      }
+                    }
+                  ]
+                }
+              ]
+            }  // end navbar collapsible content
+          ]
+        }  // end navigation HTML definition
+      }  // end HTML configurations
     },
 
     Instance: function () {
@@ -92,7 +159,7 @@
 
         self.dataset.get( 'course_name' ).then( courseName => {
           document.title = courseName;
-          setupNavigation(courseName);
+          setupNavigation( courseName );
         } );
 
         renderArticle();
@@ -101,7 +168,7 @@
 
         function setupNavigation( courseName ) {
           const header = main.querySelector( '#header' );
-          header.innerHTML = self.navigation;
+          header.appendChild( $.html( self.html.navigation ) );
 
           // setup course name
           const courseNameLink = header.querySelector( '#course-name' );

@@ -28,3 +28,25 @@ Repository for building <a href="https://github.com/ccmjs">CCM</a> components fo
     {% endfor %}
     </tbody>
 </table>
+
+<h3>Courses</h3>
+<table width="100%">
+    <colgroup>
+        <col width="30%" />
+        <col width="70%" />
+    </colgroup>
+    <thead>
+    <tr class="header">
+        <th>Name</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for course in site.data.courses %}
+    <tr>
+        <td><a href="{{ course.path }}/">{{ course.name }}</a></td>
+        <td>{{ course.description }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
