@@ -114,8 +114,8 @@
       },
 
       'css': [ 'ccm.load',
-        { url: '../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
       ],
     },
 

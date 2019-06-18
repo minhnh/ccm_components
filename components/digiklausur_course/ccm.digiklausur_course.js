@@ -29,8 +29,8 @@
           config: {
             'css': [
               'ccm.load',
-              { url: '/lib/css/bootstrap.min.css', type: 'css' },
-              { url: '/lib/css/fontawesome-all.min.css', type: 'css' }
+              { url: '../../lib/css/bootstrap.min.css', type: 'css' },
+              { url: '../../lib/css/fontawesome-all.min.css', type: 'css' }
             ],
           }
         }
@@ -39,15 +39,15 @@
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
       'css': [ 'ccm.load',
-        { url: '/lib/css/bootstrap.min.css', type: 'css' },
-        { url: '/lib/css/bootstrap.min.css', type: 'css', context: 'head' },
-        { url: '/lib/css/fontawesome-all.min.css', type: 'css' },
-        { url: '/lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
+        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' },
+        { url: '../../lib/css/fontawesome-all.min.css', type: 'css' },
+        { url: '../../lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [ 'ccm.load', [
-          { url: '/lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
-          { url: '/lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
+          { url: '../../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
+          { url: '../../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
         ]
       ],
 
@@ -172,6 +172,7 @@
 
           // setup course name
           const courseNameLink = header.querySelector( '#course-name' );
+          courseNameLink.addEventListener( 'click', () => { renderArticle() } );
           courseNameLink.innerText = courseName;
 
           // setup toggle button
@@ -211,7 +212,7 @@
 
           // Home button
           const home = header.querySelector('#home');
-          home.addEventListener('click', () => { renderArticle() });
+          home.addEventListener( 'click', () => { renderArticle() } );
         }
 
         function renderArticle(pageName = 'home') {

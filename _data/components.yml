@@ -1,27 +1,27 @@
 - name: ccm.sortable.js
-  path: sortable
+  path: components/sortable
   description: List with sortable items
 
 - name: ccm.answer_edit.js
-  path: answer_edit
+  path: components/answer_edit
   description: View for answering questions
 
 - name: ccm.answer_ranking.js
-  path: answer_ranking
+  path: components/answer_ranking
   description: Rank answers for a question
 
 - name: ccm.answer_scores.js
-  path: answer_scores
+  path: components/answer_scores
   description: Calculate answers' scores from their rankings
 
 - name: ccm.question_edit.js
-  path: question_edit
+  path: components/question_edit
   description: View for adding questions
 
 - name: ccm.question_answer.js
-  path: question_answer
+  path: components/question_answer
   description: View for viewing question_edit or answer_edit view based on user role
 
 - name: ccm.digiklausur_course.js
-  path: digiklausur_course
+  path: components/digiklausur_course
   description: Demo page for class organization

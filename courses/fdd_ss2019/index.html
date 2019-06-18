@@ -15,13 +15,13 @@
 <script>
     ccm.load(
         {
-            url: "../../digiklausur_course/ccm.digiklausur_course.js", type: "js", context: "head"
+            url: "../../components/digiklausur_course/ccm.digiklausur_course.js", type: "js", context: "head"
         }
     );
 
     // start app
     (async () => {
-        const instance = await ccm.start( '../../digiklausur_course/ccm.digiklausur_course.js' );
+        const instance = await ccm.start( '../../components/digiklausur_course/ccm.digiklausur_course.js' );
         ccm.helper.setContent( document.body, instance.root );
     })();
 </script>

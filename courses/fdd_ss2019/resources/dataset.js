@@ -5,7 +5,7 @@
  * @license The MIT License (MIT)
  */
 ccm.files[ 'dataset.js' ] = {
-  'course_name': 'Course Name',
+  'course_name': 'FDD SS2019',
 
   'home_menu': {
     'key': 'home_menu',
@@ -21,7 +21,7 @@ ccm.files[ 'dataset.js' ] = {
         'entries': [
           {
             'title': 'Questions and Answers',
-            'content': [ 'ccm.instance', '../../question_answer/ccm.question_answer.js' ]
+            'content': [ 'ccm.instance', '../../components/question_answer/ccm.question_answer.js' ]
           }
         ]
       }
