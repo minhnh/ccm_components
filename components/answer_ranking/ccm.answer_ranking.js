@@ -16,7 +16,7 @@
     config: {
       'data': { 'store': [ 'ccm.store' ] },
 
-      'comp_sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
+      'comp_sortable': [ 'ccm.component', '../../components/sortable/ccm.sortable.js' ],
 
       'user': [
         'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
