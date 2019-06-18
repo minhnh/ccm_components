@@ -21,7 +21,7 @@ ccm.files[ 'dataset.js' ] = {
         'entries': [
           {
             'title': 'Questions and Answers',
-            'content': [ 'ccm.instance', '../question_answer/ccm.question_answer.js' ]
+            'content': [ 'ccm.instance', '../../components/question_answer/ccm.question_answer.js' ]
           }
         ]
       },
@@ -36,7 +36,7 @@ ccm.files[ 'dataset.js' ] = {
         'entries': [
           {
             'title': 'Questions and Answers',
-            'content': [ 'ccm.instance', '../question_answer/ccm.question_answer.js' ]
+            'content': [ 'ccm.instance', '../../components/question_answer/ccm.question_answer.js' ]
           }
         ]
       }

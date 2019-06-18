@@ -14,13 +14,13 @@
     config: {
       'css': [
         'ccm.load',
-        { url: '../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [ 'ccm.load',
-        { url: '../lib/js/Sortable.min.js', type: 'js' },
-        { url: '../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' }
+        { url: '../../lib/js/Sortable.min.js', type: 'js' },
+        { url: '../../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' }
       ],
 
       'data': { 'store': [ 'ccm.store' ] },

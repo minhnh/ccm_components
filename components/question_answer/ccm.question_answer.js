@@ -23,19 +23,19 @@
             'qa_views': {
                 'question_edit': {
                     'name': 'Edit Questions',
-                    'component': [ 'ccm.component', '../question_edit/ccm.question_edit.js' ]
+                    'component': [ 'ccm.component', '../../components/question_edit/ccm.question_edit.js' ]
                 },
                 'answer_edit': {
                     'name': 'Edit Answers',
-                    'component': [ 'ccm.component', '../answer_edit/ccm.answer_edit.js' ]
+                    'component': [ 'ccm.component', '../../components/answer_edit/ccm.answer_edit.js' ]
                 },
                 'answer_ranking': {
                     'name': 'Rank Answers',
-                    'component': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ]
+                    'component': [ 'ccm.component', '../../components/answer_ranking/ccm.answer_ranking.js' ]
                 },
                 'answer_scores': {
                     'name': 'Ranking Scores',
-                    'component': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ]
+                    'component': [ 'ccm.component', '../../components/answer_scores/ccm.answer_scores.js' ]
                 }
             },
 
@@ -45,8 +45,8 @@
             },
 
             'css': [ 'ccm.load',
-              { url: '../lib/css/bootstrap.min.css', type: 'css'},
-              { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+              { url: '../../lib/css/bootstrap.min.css', type: 'css'},
+              { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
             ],
 
             "html": {

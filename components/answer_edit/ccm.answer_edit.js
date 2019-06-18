@@ -56,13 +56,13 @@
 </div>`,
 
       'css': [ 'ccm.load',
-        { url: '../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [
         'ccm.load', {
-          url: "../lib/js/crypto-js.min.js", type: 'js', context: 'head'
+          url: "../../lib/js/crypto-js.min.js", type: 'js', context: 'head'
         }
       ]
     },

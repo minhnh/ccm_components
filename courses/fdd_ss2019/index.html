@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Minh Nguyen <minh.nguyen@smail.inf.h-brs.de> 2017-2019">
+<meta name="license" content="The MIT License (MIT)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+</head>
+
+<body>
+<script src="https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js"></script>
+<script>
+    ccm.load(
+        {
+            url: "../../components/digiklausur_course/ccm.digiklausur_course.js", type: "js", context: "head"
+        }
+    );
+
+    // start app
+    (async () => {
+        const instance = await ccm.start( '../../components/digiklausur_course/ccm.digiklausur_course.js' );
+        ccm.helper.setContent( document.body, instance.root );
+    })();
+</script>
+</body>
