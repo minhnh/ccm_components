@@ -23,28 +23,41 @@
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "question_prefix": "q_",        // will be prepended to question indices to create element ID's
         "truncate_length": 16           // number of characters to keep as ID for hashed questions
       },
-
-      // $question_id$ and $question_text$ will be replaced with according values for each question
-      // id '$question_id$_button' will be used for handling remove event
-      "question_html":
-`<div class="input-group-prepend">
-  <span class="input-group-text" id="$question_id$_label">Question</span>
-</div>
-<input type="text" name="$question_id$" class="form-control" aria-label="Question"
-       aria-describedby="$question_id$_label" value="$question_text$">
-<div class="input-group-append">
-  <button class="btn btn-link" type="button" id="$question_id$_button">Remove</button>
-</div>`,
 
       "html": {
         'main': [
           { 'id': 'questions' },
           { 'id': 'add_question' },
           { 'id': 'save' }
-        ]
+        ],
+
+        'question_entry': {
+          'class': 'input-group mb-3',
+          'inner': [
+            { // question label
+              'class': 'input-group-prepend',
+              'inner': {
+                'tag': 'span', 'class': 'input-group-text', 'inner': 'Question', 'id': 'q_%question_id%_label'
+              }
+            },
+            // question input
+            {
+              'tag': 'input', 'class': 'form-control', 'type': 'text', 'aria-label': 'Question',
+              'aria-describedby': 'q_%question_id%_label', 'name': 'q_%question_id%', 'value': '%question_text%',
+              'onblur': '%blur%'
+            },
+            // button to remove question
+            {
+              'class': 'input-group-append',
+              'inner': {
+                'tag': 'button', 'class': 'btn btn-link', 'type': 'button', 'inner': 'Remove',
+                'id': 'q_%question_id%_rm_btn', 'onclick': '%click%'
+              }
+            }
+          ]
+        }  // end question_entry
       },
 
       'css': [ 'ccm.load',
@@ -119,7 +132,7 @@
         // render area with save button and notification
         renderSaveElem();
 
-        function renderSaveElem(){
+        function renderSaveElem() {
           const saveButton = document.createElement( 'button' );
           const notificationSpan = document.createElement( 'span' );
           saveElem.appendChild( saveButton );
@@ -141,8 +154,8 @@
                   console.log( reason );
                 } ).catch( err => console.log( err.message ) );    // unhandled exception
             renderQuestions();
-        } );
-    }
+          } );
+        }
 
         function renderQuestions() {
           questionsElem.innerHTML = '';
@@ -171,34 +184,23 @@
         }
 
         function renderQuestionDiv( questionId, questionText ) {
-          const questionDiv = document.createElement( 'div' );
-          questionDiv.className = "input-group mb-3";
-          questionDiv.innerHTML = self.question_html;
-
-          // ensure valid question ID's and name, i.e. no leading number
-          const questionIdHtml = self.constants.question_prefix + questionId;
-          questionDiv.innerHTML = questionDiv.innerHTML.replace(
-              /\$question_id\$/g, questionIdHtml );
-          questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$question_text\$/g, questionText );
-
-          // write text content to dataset when question field is unfocused
-          const questionInput = questionDiv.querySelector( 'input[name=\'' + questionIdHtml + '\']' );
-          questionInput.addEventListener( 'blur', ( event ) => {
-            const inputElem = event.srcElement;
-            questionData[ questionId ] = inputElem ? inputElem.value : '';
-            reindexQuestions();
+          // replace '%question_id%' and '%question_text%' with appropriate values, handle events
+          const questionDiv = $.html( self.html.question_entry, {
+            'question_id': questionId, 'question_text': questionText,
+            // write text content to dataset when question field is unfocused
+            'blur': ( event ) => {
+              const inputElem = event.srcElement;
+              questionData[ questionId ] = inputElem ? inputElem.value : '';
+              reindexQuestions();
+            },
+            // handle removing a question
+            'click': async () => {
+              delete questionData[ questionId ];
+              renderQuestions();
+            }
           } );
-
-          // handle removing a question
-          const removeButton = questionDiv.querySelector( '#' + questionIdHtml + '_button' );
-          removeButton.addEventListener( 'click', async () => {
-            delete questionData[ questionId ];
-            renderQuestions();
-          } );
-          questionDiv.appendChild( removeButton );
-
           return questionDiv;
-        }
+        }  // end renderQuestionDiv()
 
         // ensure the question ids are correct
         function reindexQuestions() {
