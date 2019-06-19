@@ -28,7 +28,7 @@
         'key_questions': 'questions',   // key of store document containing question entries
         'key_ans_prefix': 'answers_',   // question ID's will be appended to this to create the name of the document
                                         // containing the question's answers
-        'num_answer': 5,                // number of answers to rank'question_html':
+        'num_answer': 5,                // number of answers to rank
         'question_html':                // default HTML for each question text element
 `
 <div class="input-group row m-1 pt-4">
