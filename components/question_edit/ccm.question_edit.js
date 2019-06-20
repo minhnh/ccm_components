@@ -30,6 +30,22 @@
         'main': {
           'id': 'main',
           'inner': [
+            // HTML layout for a deadline date and time
+            {
+              'id': 'deadline', 'class': 'input-group mb-4',
+              'inner': [
+                { 'class': 'input-group-prepend', 'inner': '<span class="input-group-text">Deadline</span>' },
+                {
+                  'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'dl_date', 'id': 'dl-date',
+                  'onchange': '%dl-change%'
+                },
+                {
+                  'tag': 'input', 'type': 'time', 'class': 'form-control col-2', 'name': 'dl_time', 'id': 'dl-time',
+                  'onchange': '%dl-change%'
+                }
+              ]
+            },
+
             // HTML area where questions will be rendered
             { 'id': 'questions' },
 
@@ -42,7 +58,7 @@
               }
             },
 
-            // HTML layout for a button to add new questions, and a notification when saving finished
+            // HTML layout for a button to save question data, and a notification field for when saving finished
             {
               'id': 'save',
               'inner': [
@@ -80,6 +96,10 @@
             }
           ]
         },  // end question_entry
+
+        // message to display when user is not logged in
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+
       },  // end html
 
       'css': [ 'ccm.load',
@@ -88,10 +108,8 @@
       ],
 
       'js': [
-        'ccm.load', {
-          // crypto-js module for hashing question data
-          url: "../../lib/js/crypto-js.min.js", type: 'js', context: 'head'
-        }
+        // crypto-js module for hashing question data
+        'ccm.load', { url: "../../lib/js/crypto-js.min.js", type: 'js', context: 'head' }
       ]
     },
 
@@ -111,6 +129,7 @@
         // get dataset for rendering
         const self = this;
         let questionData = {};
+        let deadline;
 
         // login
         let username;
@@ -119,9 +138,7 @@
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
-          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
-              '  Please login to continue!\n' +
-              '</div>';
+          $.setContent( self.element, $.html( self.html.login_message ) );
           return;
         }
 
@@ -141,10 +158,21 @@
             renderQuestions();
           },
 
+          // handle deadline change
+          'dl-change': async ( event ) => {
+            // prevent unexpected form input events
+            if ( event.srcElement.type !== 'date' && event.srcElement.type !== 'time' ) return;
+
+            if ( !deadline ) deadline = {};
+            deadline[ event.srcElement.type ] = event.srcElement.value;
+          },
+
           // handle saving questions to data store
           'save-click': async () => {
-            await self.data.store.set( { key: self.constants.key_questions, 'entries': questionData } )
-              .then ( () => {       // successful update
+            await self.data.store.set( {
+              // new question data
+              key: self.constants.key_questions, 'entries': questionData, 'deadline': deadline
+            } ) .then ( () => {       // successful update
                 const notificationSpan = self.element.querySelector( '#save-notification' );
                 notificationSpan.innerHTML = 'Success';
                 setTimeout( () => { notificationSpan.innerHTML = ''; }, 1000 );
@@ -157,16 +185,31 @@
         } ) );
 
         // load initial data from store
-        await self.data.store.get( self.constants.key_questions ).then(
-            questions => {
-              Object.assign( questionData, questions && questions.entries ? questions.entries : {} );
-            },
-            reason => {   // read questions failed
-              console.log( reason );
-            } ).catch( err => console.log( err.message ) );    // unhandled exception
+        await self.data.store.get( self.constants.key_questions ).then( questions => {
+            Object.assign( questionData, questions && questions.entries ? questions.entries : {} );
 
-        // render questions
-        renderQuestions();
+            // set deadline date & time
+            if ( questions && questions.deadline ) {
+              deadline = questions.deadline;
+            } else {  // fill with current date & time
+              const today = new Date();
+              const curDate = today.getFullYear() + '-' +
+                              padNumber( today.getMonth() + 1, 2 ) + '-' + padNumber( today.getDate(), 2 );
+              const curTime = padNumber( today.getHours(), 2 ) + ':' + padNumber( today.getMinutes(), 2 );
+              deadline = { 'date': curDate, 'time': curTime };
+            }
+            const dateInput = self.element.querySelector( '#dl-date' );
+            dateInput.setAttribute( 'value', deadline.date );
+            const timeInput = self.element.querySelector( '#dl-time' );
+            timeInput.setAttribute( 'value', deadline.time );
+
+            // render questions
+            renderQuestions();
+          },
+          reason => {   // read questions failed
+            console.log( reason );
+          }
+        ).catch( err => console.log( err.message ) );    // unhandled exception
 
         function renderQuestions() {
           const questionsElem = self.element.querySelector( '#questions' );
@@ -215,6 +258,10 @@
           // use a truncated SHA-256 as new question ID
           const hashObj = CryptoJS.SHA256( questionText.trim() );
           return hashObj.toString().substring( 0, self.constants.truncate_length );
+        }
+
+        function padNumber( number, numDigits, prefix='0' ) {
+          return String( number ).padStart( numDigits, prefix );
         }
       };
     }
