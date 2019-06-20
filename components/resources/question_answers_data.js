@@ -57,6 +57,6 @@ ccm.files[ 'question_answers_data.js' ] = {
     },
 
     "role": {
-        "name": "student"
+        "name": "grader"
     }
 };
