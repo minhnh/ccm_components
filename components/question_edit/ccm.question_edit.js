@@ -27,12 +27,34 @@
       },
 
       "html": {
-        'main': [
-          { 'id': 'questions' },
-          { 'id': 'add_question' },
-          { 'id': 'save' }
-        ],
+        'main': {
+          'id': 'main',
+          'inner': [
+            // HTML area where questions will be rendered
+            { 'id': 'questions' },
 
+            // HTML layout for a button to add new questions
+            {
+              'id': 'add_question',
+              'inner': {
+                'tag': 'button', 'type': 'button', 'class': 'btn btn-link', 'inner': 'Add New Question',
+                'onclick': '%add-question-click%'
+              }
+            },
+
+            // HTML layout for a button to add new questions, and a notification when saving finished
+            {
+              'id': 'save',
+              'inner': [
+                { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
+                  'onclick': '%save-click%' },
+                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+              ]
+            }
+          ]
+        },
+
+        // HTML layout for each question entry
         'question_entry': {
           'class': 'input-group mb-3',
           'inner': [
@@ -57,8 +79,8 @@
               }
             }
           ]
-        }  // end question_entry
-      },
+        },  // end question_entry
+      },  // end html
 
       'css': [ 'ccm.load',
         { url: '../../lib/css/bootstrap.min.css', type: 'css'},
@@ -107,12 +129,32 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main ) );
+        $.setContent( self.element, $.html( self.html.main, {
 
-        // get page fragments
-        const questionsElem = self.element.querySelector( '#questions' );
-        const addQuestionElem = self.element.querySelector( '#add_question' );
-        const saveElem = self.element.querySelector( '#save' );
+          // handle adding new questions
+          'add-question-click': async () => {
+            const emptyQuestionId = getQuestionId( '' );
+
+            if ( questionData[ emptyQuestionId ] ) return;
+
+            questionData[ emptyQuestionId ] = '';
+            renderQuestions();
+          },
+
+          // handle saving questions to data store
+          'save-click': async () => {
+            await self.data.store.set( { key: self.constants.key_questions, 'entries': questionData } )
+              .then ( () => {       // successful update
+                const notificationSpan = self.element.querySelector( '#save-notification' );
+                notificationSpan.innerHTML = 'Success';
+                setTimeout( () => { notificationSpan.innerHTML = ''; }, 1000 );
+              },
+              reason => {   // write failed
+                console.log( reason );
+              } ).catch( err => console.log( err.message ) );    // unhandled exception
+            renderQuestions();
+          },
+        } ) );
 
         // load initial data from store
         await self.data.store.get( self.constants.key_questions ).then(
@@ -126,61 +168,13 @@
         // render questions
         renderQuestions();
 
-        // render button to add new questions
-        renderAddQuestionButton();
-
-        // render area with save button and notification
-        renderSaveElem();
-
-        function renderSaveElem() {
-          const saveButton = document.createElement( 'button' );
-          const notificationSpan = document.createElement( 'span' );
-          saveElem.appendChild( saveButton );
-          saveElem.appendChild( notificationSpan );
-
-          saveButton.setAttribute( 'type', 'button' );
-          saveButton.className = "btn btn-info";
-          saveButton.innerText = 'Save';
-          saveButton.addEventListener( 'click', async () => {
-            await self.data.store.set( { key: self.constants.key_questions, 'entries': questionData } ).then (
-                () => {       // successful update
-                  notificationSpan.innerHTML = 'Success';
-                  notificationSpan.className = "alert alert-dismissible";
-                  setTimeout( function () {
-                    notificationSpan.innerHTML = ' ';
-                  }, 1000 );
-                },
-                reason => {   // write failed
-                  console.log( reason );
-                } ).catch( err => console.log( err.message ) );    // unhandled exception
-            renderQuestions();
-          } );
-        }
-
         function renderQuestions() {
+          const questionsElem = self.element.querySelector( '#questions' );
           questionsElem.innerHTML = '';
           Object.keys( questionData ).forEach( questionId => {
             const question = questionData[ questionId ];
             questionsElem.appendChild( renderQuestionDiv( questionId, question ? question : '' ) );
           } );
-        }
-
-        function renderAddQuestionButton() {
-          const addQuestionButton = document.createElement( 'button' );
-          addQuestionButton.className = 'btn btn-link';
-          addQuestionButton.setAttribute( 'type', 'button' );
-          addQuestionButton.innerText = 'Add New Question';
-          addQuestionButton.addEventListener( 'click', async () => {
-            const emptyQuestionId = getQuestionId( '' );
-
-            // if there is already an empty entry return
-            if ( questionData[ emptyQuestionId ] ) return;
-
-            // add empty question entry
-            questionData[ emptyQuestionId ] = '';
-            renderQuestions();
-          } );
-          addQuestionElem.appendChild( addQuestionButton );
         }
 
         function renderQuestionDiv( questionId, questionText ) {
