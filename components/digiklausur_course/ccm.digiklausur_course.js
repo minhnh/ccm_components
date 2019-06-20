@@ -135,7 +135,11 @@
               ]
             }  // end navbar collapsible content
           ]
-        }  // end navigation HTML definition
+        },  // end navigation HTML definition
+
+        // message to display when user is not logged in
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+
       }  // end HTML configurations
     },
 
@@ -155,7 +159,7 @@
       };
 
       this.start = async () => {
-        let main = $.html(self.html.main);
+        let main = $.html( self.html.main );
 
         self.dataset.get( 'course_name' ).then( courseName => {
           document.title = courseName;
@@ -215,17 +219,15 @@
           home.addEventListener( 'click', () => { renderArticle() } );
         }
 
-        function renderArticle(pageName = 'home') {
+        function renderArticle( pageName = 'home' ) {
           const article = main.querySelector( '#article' );
 
           if ( !self.user || !self.user.isLoggedIn() ) {
-            article.innerHTML = '<div class="alert alert-info" role="alert">\n' +
-                '  Please login to continue!\n' +
-                '</div>';
+            $.setContent( article, $.html( self.html.login_message ) );
             return;
           }
 
-          switch (pageName) {
+          switch ( pageName ) {
             case 'home':
             default:
               renderHome();
