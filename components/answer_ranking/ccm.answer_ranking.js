@@ -117,7 +117,7 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( this.element, $.html( this.html.main, {
+        $.setContent( self.element, $.html( self.html.main, {
           // save ranking event handler
           'save-click': async ( event ) => {
             if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
@@ -129,7 +129,7 @@
               }
             }
             await self.data.store.set( userData ).then( () => {
-              const notificationSpan = event.srcElement.parentElement.querySelector( '#save-notification' );
+              const notificationSpan = self.element.querySelector( '#save-notification' );
               notificationSpan.innerText = 'Success';
               setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
             } );
@@ -137,7 +137,7 @@
         } ) );  // end $.setContent()
 
         // get page fragments
-        const rankingElem = this.element.querySelector( '#ranking' );
+        const rankingElem = self.element.querySelector( '#ranking' );
 
         // load user data
         self.data.store.get( username ).then( async ud => {
