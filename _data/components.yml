@@ -2,6 +2,10 @@
   path: components/sortable
   description: List with sortable items
 
+- name: ccm.countdown_timer.js
+  path: components/countdown_timer
+  description: Countdown timer given a deadline
+
 - name: ccm.answer_edit.js
   path: components/answer_edit
   description: View for answering questions
