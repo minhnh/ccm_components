@@ -50,13 +50,17 @@
             { "id": "submit" }
           ]
         },
+
         "rank_entry": {
           "class": "rank_entry",
           "inner": [
             { "id": "question" },
             { "id": "answers" }
           ]
-        }
+        },
+
+        // message to display when user is not logged in
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
       },
 
       'css': [ 'ccm.load',
@@ -90,13 +94,11 @@
           username = self.user.data().user;
         },
         reason => {  // login failed
-          console.log( 'login rejected: ' + reason );
-        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
+          console.log( reason );
+        } ).catch( ( exception ) => console.log( exception ) );
 
         if ( !username ) {
-          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
-              '  Please login to continue!\n' +
-              '</div>';
+          $.setContent( self.element, $.html( self.html.login_message ) );
           return;
         }
 
@@ -222,11 +224,11 @@
           }  // end sorting answers by rank count
 
           // Fill 'answers' randomly, starting from ones with the least number of ranking
-          for ( rankCount in Object.keys( ansByRankCount ).sort() ) {
+          Object.keys( ansByRankCount ).sort().forEach( rankCount => {
             let ansCount = Object.keys( answers ).length;
 
             // if there are enough entries in 'answers', stop the loop
-            if ( ansCount === self.constants.num_answer ) break;
+            if ( ansCount === self.constants.num_answer ) return;
 
             // if there are not enough entries in 'answers' AND there are still answers with the current
             // number of ranking, randomly add more entries to 'answers'
@@ -244,7 +246,7 @@
               // update 'ansCount'
               ansCount = Object.keys( answers ).length;
             }
-          }  // end sampling for answers
+          } );  // end sampling for answers
 
           return answers;
         }  // end getAnswers()
