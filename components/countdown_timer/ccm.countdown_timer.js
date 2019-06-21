@@ -14,14 +14,26 @@
     config: {
       'html': {
         'main': { 'id': 'main' },
-        'timer': { 'class': 'd-inline-flex flex-row bd-highlight', 'inner': '%days% d %hours%h %minutes%m %seconds%s' },
-        'expired': { 'inner': 'expired at %time_string%' }
+        'timer': {
+          'class': 'd-inline-flex p-2 m-1 bg-light text-info',
+          'inner': '%days% d %hours%h %minutes%m %seconds%s'
+        },
+        'expired': { 'class': 'd-inline-flex p-2 m-1 bg-light text-info', 'inner': 'expired at %time_string%' }
       },
 
       // example deadline: { 'date': '2019-06-20', 'time': '20:00' }
       'deadline': null,
 
-      'onfinish': function( srcElement ) { console.log( srcElement.innerHTML ) }
+      // event to be called with 'self.element' when the timer expires
+      'onfinish': function( srcElement ) { console.log( srcElement.innerHTML ) },
+
+      // start blinking if the time offset is less than this amount (ms), default to 1 minute
+      'warn_time': 60000,
+
+      'css': [ 'ccm.load',
+        { url: '../../lib/css/bootstrap.min.css', type: 'css'},
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+      ],
     },
 
     Instance: function () {
@@ -49,6 +61,7 @@
           deadline.setMinutes( deadline.getMinutes() + 1 );
         }
 
+        let blink = false;
         let interval = setInterval( () => {
           const offset = deadline - new Date();
           if ( offset < 0 ) {
@@ -65,9 +78,21 @@
           const hours   = Math.floor( ( offset % ( 1000 * 60 * 60 * 24 ) ) / ( 1000 * 60 * 60 ));
           const minutes = Math.floor( ( offset % ( 1000 * 60 * 60 )      ) / ( 1000 * 60 ));
           const seconds = Math.floor( ( offset % ( 1000 * 60 )           ) / 1000);
-          $.setContent( mainElem, $.html( self.html.timer, {
+
+          const timerElem = $.html( self.html.timer, {
             'days': days, 'hours': hours, 'minutes': minutes, 'seconds': seconds
-          } ) );
+          } );
+
+          // if warning is specified, blink in the last minute
+          if ( self.warn_time && offset < self.warn_time ) {
+            if ( blink ) {
+              timerElem.classList.remove( 'bg-light', 'text-info' );
+              timerElem.classList.add( 'bg-warning', 'text-light' );
+            }
+            blink = !blink;
+          }
+
+          $.setContent( mainElem, timerElem );
         }, 1000 );
       };  // end start()
     }  // end Instance()
