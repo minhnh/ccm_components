@@ -11,10 +11,7 @@ ccm.files[ 'question_answers_data.js' ] = {
             "9c7d5b046878838d" : "How are you?",
             "51ebe90aeed77259" : "what is robotics?"
         },
-        "deadline": {
-            "date": "2019-07-20",
-            "time": "18:00"
-        }
+        "deadline": null
     },
 
     "mnguy12s": {
