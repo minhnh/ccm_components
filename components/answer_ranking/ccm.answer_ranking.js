@@ -29,33 +29,44 @@
         'key_ans_prefix': 'answers_',   // question ID's will be appended to this to create the name of the document
                                         // containing the question's answers
         'num_answer': 5,                // number of answers to rank
-        'question_html':                // default HTML for each question text element
-`
-<div class="input-group row m-1 pt-4">
-  <div class="input-group-prepend col-sm-0 p-1">
-    <label for="q_$q_id$" class="text-secondary">Question</label>
-  </div>
-  <div class="col-sm-0">
-    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="q_$q_id$" value="">
-  </div>
-</div>
-`,
       },
 
       'html': {
-        "main": {
-          "id": "main",
-          "inner": [
-            { "id": "ranking" },
-            { "id": "submit" }
+        'main': {
+          'id': 'main',
+          'inner': [
+            { 'id': 'ranking' },
+            {
+              'id': 'submit',
+              'inner': [
+                { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
+                  'onclick': '%save-click%' },
+                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+              ]
+            }
           ]
         },
 
-        "rank_entry": {
-          "class": "rank_entry",
-          "inner": [
-            { "id": "question" },
-            { "id": "answers" }
+        // HTML config for a question and answers
+        'rank_entry': {
+          'inner': [
+            {
+              'id': 'question', 'class': 'input-group row m-1 pt-4',
+              'inner': [
+                {
+                  'class': 'input-group-prepend col-sm-0 p-1',
+                  'inner': [ { 'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%', 'inner': 'Question' } ]
+                },
+                {
+                  'class': 'col-sm-0',
+                  'inner': [ {
+                    'tag': 'input', 'class': 'form-control-plaintext p-1 text-info', 'type': 'text', 'readonly': true,
+                    'id': 'q_%question_id%', 'value': '%question_text%'
+                  } ]
+                }
+              ]
+            },
+            { 'id': 'answers' }
           ]
         },
 
@@ -106,11 +117,27 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( this.element, $.html( this.html.main ) );
+        $.setContent( this.element, $.html( this.html.main, {
+          // save ranking event handler
+          'save-click': async ( event ) => {
+            if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
+            for ( qId in sortableObjects ) {
+              const rankings = sortableObjects[ qId ].getRanking();
+              userData[ 'ranking' ][ qId ] = {};
+              for ( rankNum in rankings ) {
+                userData[ 'ranking' ][ qId ][ rankings[ rankNum ] ] = rankNum;
+              }
+            }
+            await self.data.store.set( userData ).then( () => {
+              const notificationSpan = event.srcElement.parentElement.querySelector( '#save-notification' );
+              notificationSpan.innerText = 'Success';
+              setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
+            } );
+          }  // end event handler
+        } ) );  // end $.setContent()
 
         // get page fragments
         const rankingElem = this.element.querySelector( '#ranking' );
-        const submitElem = this.element.querySelector( '#submit' );
 
         // load user data
         self.data.store.get( username ).then( async ud => {
@@ -145,32 +172,6 @@
           },
           reason => console.log( reason )               // read from data store failed
         ).catch( err => console.log( err.message ) );   // unhandled exception
-
-        // render save button and notification span
-        const saveButton = document.createElement( 'button' );
-        const notificationSpan = document.createElement( 'span' );
-        saveButton.innerHTML = 'Save';
-        saveButton.className = 'btn btn-info m-3 p-2';
-        notificationSpan.className = "alert alert-dismissible";
-        submitElem.appendChild( saveButton );
-        submitElem.appendChild( notificationSpan );
-
-        saveButton.addEventListener( 'click', async () => {
-          if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
-          for ( qId in sortableObjects ) {
-            const rankings = sortableObjects[ qId ].getRanking();
-            userData[ 'ranking' ][ qId ] = {};
-            for ( rankNum in rankings ) {
-              userData[ 'ranking' ][ qId ][ rankings[ rankNum ] ] = rankNum;
-            }
-          }
-          await self.data.store.set( userData ).then( () => {
-            notificationSpan.innerText = 'Success';
-            setTimeout( function () {
-              notificationSpan.innerText = '';
-            }, 1000 );  // message disappear after 1 second
-          } );
-        } );  // end saveButton.addEventListener()
 
         function getAnswers( userData, questionId, allAnswers ) {
           // collection of selected answers to return
@@ -253,14 +254,9 @@
 
         async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
           const qaRankingFragment = document.createDocumentFragment();
-          $.setContent( qaRankingFragment, $.html( self.html.rank_entry ) );
-
-          // render the question area
-          const questionDiv = qaRankingFragment.querySelector( '#question' );
-          questionDiv.innerHTML = self.constants.question_html;
-          questionDiv.innerHTML = questionDiv.innerHTML.replace( /\$q_id\$/g, questionId );
-          const questionTextElem = questionDiv.querySelector( "#q_" + questionId );
-          questionTextElem.setAttribute( 'value', questionText );
+          $.setContent( qaRankingFragment, $.html( self.html.rank_entry, {
+            'question_id': questionId, 'question_text': questionText
+          } ) );
 
           // render the answer ranking area
           const answersDiv = qaRankingFragment.querySelector( '#answers' );
