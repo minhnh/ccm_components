@@ -18,6 +18,8 @@
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 
+      'comp_countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ],
+
       "data": { "store": [ "ccm.store" ] },
 
       // predefined values
@@ -30,7 +32,17 @@
       "html": {
         'main': {
           'inner': [
+            // area for deadline timer
+            { 'id': 'deadline', 'class': 'mb-3 row m-1', 'inner': [
+              {
+                'tag': 'label', 'class': 'input-group-prepend col-sm-0 p-1 mt-2 text-secondary',
+                'inner': 'Remaining time', 'for': 'deadline-timer'
+              },
+              { 'id': 'deadline-timer', 'class': 'col-sm-0' }
+            ] },
+            // area for question and answer
             { 'id': 'content' },
+            // area for save button
             {
               'id': 'save',
               'inner': [
@@ -113,6 +125,7 @@
         // get dataset for rendering
         const self = this;
         const qaData = {};
+        let deadline;
 
         // login
         let username;
@@ -157,6 +170,7 @@
         // load questions from store
         await self.data.store.get( self.constants.key_questions ).then(
             questions => {
+              deadline = questions.deadline;
               questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
                 qaData[ questionId ] = {};
                 qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
@@ -182,6 +196,16 @@
             },
             reason => console.log( reason )             // read from data store failed
         ).catch( err => console.log( err.message ) );   // unhandled exception
+
+        const dlCountdownElem = self.element.querySelector( '#deadline-timer' );
+        await self.comp_countdown.start( {
+          root: dlCountdownElem,
+          'deadline': deadline,
+          'onfinish': () => {
+            const saveElem = self.element.querySelector( '#save' );
+            saveElem.innerHTML = '';
+          }
+        } );
 
         renderQAPairs();
 
