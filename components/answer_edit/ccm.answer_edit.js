@@ -23,37 +23,66 @@
       // predefined values
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "qa_",             // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "q_",             // will be prepended to question-answer pair indices to create element ID's
         "truncate_length": 16           // number of characters to keep as ID for hashed answers
       },
 
       "html": {
-        'main': [
-          { 'id': 'content' },
-          { 'id': 'save' }
-        ]
-      },
+        'main': {
+          'inner': [
+            { 'id': 'content' },
+            {
+              'id': 'save',
+              'inner': [
+                { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
+                  'onclick': '%save-click%' },
+                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+              ]
+            }
+          ]
+        },
 
-      // '$qa_id$' will be replaced with according values for each question
-      "qa_html":
-`
-<div class="input-group row m-1">
-  <div class="input-group-prepend col-sm-0 p-1">
-    <label for="$qa_id$_question" class="text-secondary">Question</label>
-  </div>
-  <div class="col-sm-0">
-    <input type="text" readonly class="form-control-plaintext p-1 text-info" id="$qa_id$_question" value="">
-  </div>
-</div>
-<div class="input-group row mb-3 m-1">
-  <div class="input-group-prepend col-md-0">
-    <label for="$qa_id$_answer" class="p-2 input-group-text">Answer</label>
-  </div>
-  <div class="col-lg-0">
-    <textarea class="form-control" aria-label="Answer" id="$qa_id$_answer" style="resize: both;">
-    </textarea>
-  </div>
-</div>`,
+        // render question and answer text box
+        'qa_entry': {
+          'inner': [
+            // question label and text
+            {
+              'class': 'input-group row m-1', 'inner': [
+                {
+                  'class': 'input-group-prepend col-sm-0 p-1', 'inner': [ {
+                    'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%_question', 'inner': 'Question'
+                  } ]
+                },
+                {
+                  'class': 'col-sm-0', 'inner': [ {
+                    'tag': 'input', 'type': 'text', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
+                    'id': 'q_%question_id%_question', 'value': '%question_text%'
+                  } ]
+                }
+              ]
+            },
+            // answer label and text box
+            {
+              'class': 'input-group row mb-3 m-1', 'inner': [
+                {
+                  'class': 'input-group-prepend col-md-0', 'inner': [ {
+                    'tag': 'label', 'class': 'p-2 input-group-text', 'for': 'q_%question_id%_answer', 'inner': 'Answer'
+                  } ]
+                },
+                {
+                  'class': 'col-lg-0', 'inner': [ {
+                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer', 'style': 'resize: both;',
+                    'id': 'q_%question_id%_answer', 'inner': '%answer_text%'
+                  } ]
+                }
+              ]
+            }
+          ],
+        },  // end qa_entry
+
+        // message to display when user is not logged in
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+      },
 
       'css': [ 'ccm.load',
         { url: '../../lib/css/bootstrap.min.css', type: 'css' },
@@ -92,9 +121,7 @@
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
-          self.element.innerHTML = '<div class="alert alert-info" role="alert">\n' +
-              '  Please login to continue!\n' +
-              '</div>';
+          $.setContent( self.element, $.html( self.html.login_message ) );
           return;
         }
 
@@ -102,11 +129,30 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main ) );
+        $.setContent( self.element, $.html( self.html.main, {
+          // save ranking event handler
+          'save-click': async ( event ) => {
+            let payload = { key : username, answers: {} };
+
+            Object.keys( qaData ).forEach( ( key ) => {
+              const questionIdHtml = self.constants.qa_prefix + key;
+              let aId = "textarea#" + questionIdHtml + "_answer";
+              const ansText = contentElem.querySelector( aId ).value;
+              const hashObj = CryptoJS.SHA256( ansText.trim() );
+              const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
+              payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
+            });
+
+            await self.data.store.set( payload ).then( () => {
+              const notificationSpan = self.element.querySelector( '#save-notification' );
+              notificationSpan.innerText = 'Success';
+              setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
+            } );
+          }  // end event handler
+        } ) );
 
         // get page fragments
         const contentElem = self.element.querySelector( '#content' );
-        const saveElem = self.element.querySelector( '#save' );
 
         // load questions from store
         await self.data.store.get( self.constants.key_questions ).then(
@@ -139,59 +185,14 @@
 
         renderQAPairs();
 
-        // render save button
-        const notificationSpan = document.createElement( 'span' );
-        const saveButton = document.createElement( 'button' );
-        saveElem.appendChild( saveButton );
-        saveElem.appendChild( notificationSpan );
-
-        notificationSpan.className = "alert alert-dismissible";
-        saveButton.setAttribute( 'type', 'button' );
-        saveButton.className = "btn btn-info";
-        saveButton.innerText = 'Save';
-
-        saveButton.addEventListener( 'click', async () => {
-          let payload = {
-            key : username,
-            answers: {}
-          };
-
-          Object.keys( qaData ).forEach( ( key ) => {
-            const questionIdHtml = self.constants.qa_prefix + key;
-            let aId = "textarea#" + questionIdHtml + "_answer";
-            const ansText = contentElem.querySelector( aId ).value;
-            const hashObj = CryptoJS.SHA256( ansText.trim() );
-            const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
-            payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
-          });
-
-          await self.data.store.set( payload ).then( () => {
-            notificationSpan.innerText = 'Success';
-            setTimeout( function () {
-              notificationSpan.innerText = '';
-            }, 1000 );  // message disappear after 1 second
-          } );
-        } );  // end saveButton.addEventListener()
-
         function renderQAPairs() {
           Object.keys( qaData ).forEach( ( questionId ) => {
-            const qaDiv = document.createElement( 'div' );
-            qaDiv.innerHTML = self.qa_html;
-
-            const questionIdHtml = self.constants.qa_prefix + questionId;
-            qaDiv.innerHTML = qaDiv.innerHTML.replace( /\$qa_id\$/g, questionIdHtml );
-
-            // set question text
-            const questionTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_question" );
-            questionTextElem.setAttribute( 'value', qaData[ questionId ].question );
-
-            // set answer text
-            const answer = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
-            const answerTextElem = qaDiv.querySelector( "#" + questionIdHtml + "_answer" );
-            answerTextElem.innerHTML = answer;
-
+            const answerText = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
+            const qaDiv = $.html( self.html.qa_entry, {
+              'question_id': questionId, 'question_text': qaData[ questionId ].question, 'answer_text': answerText
+            } );
             contentElem.appendChild( qaDiv );
-          } );  // end Object.keys().forEach()
+          } );
         }  // end renderQAPairs()
       };  // end this.start()
     }  // end Instance()
