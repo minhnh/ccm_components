@@ -170,7 +170,7 @@
         // load questions from store
         await self.data.store.get( self.constants.key_questions ).then(
             questions => {
-              deadline = questions.deadline;
+              deadline = questions.answer_deadline;
               questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
                 qaData[ questionId ] = {};
                 qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
