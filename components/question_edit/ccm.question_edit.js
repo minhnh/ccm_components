@@ -30,19 +30,42 @@
         'main': {
           'id': 'main',
           'inner': [
-            // HTML layout for a deadline date and time
+            // HTML layout for a deadline date and time for answering questions
             {
-              'id': 'deadline', 'class': 'input-group mb-4',
+              'id': 'answer-deadline', 'class': 'input-group mb-1',
               'inner': [
-                { 'class': 'input-group-prepend', 'inner': '<span class="input-group-text">Deadline</span>' },
                 {
-                  'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'dl_date', 'id': 'dl-date',
-                  'onchange': '%dl-change%'
+                  'class': 'input-group-prepend',
+                  'inner': '<span class="input-group-text pr-3">Answer Deadline</span>'
                 },
                 {
-                  'tag': 'input', 'type': 'time', 'class': 'form-control col-2', 'name': 'dl_time', 'id': 'dl-time',
-                  'onchange': '%dl-change%'
+                  'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'ans_dl_date',
+                  'id': 'ans-dl-date', 'onchange': '%ans-dl-change%'
+                },
+                {
+                  'tag': 'input', 'type': 'time', 'class': 'form-control col-2', 'name': 'ans_dl_time',
+                  'id': 'ans-dl-time', 'onchange': '%ans-dl-change%'
                 }
+              ]
+            },
+
+            // HTML layout for a deadline date and time for ranking answers
+            {
+              'id': 'ranking-deadline', 'class': 'input-group mb-4',
+              'inner': [
+                {
+                  'class': 'input-group-prepend',
+                  'inner': '<span class="input-group-text">Ranking Deadline</span>'
+                },
+                {
+                  'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'rank_dl_date',
+                  'id': 'rank-dl-date', 'onchange': '%rank-dl-change%'
+                },
+                {
+                  'tag': 'input', 'type': 'time', 'class': 'form-control col-2', 'name': 'rank_dl_time',
+                  'id': 'rank-dl-time', 'onchange': '%rank-dl-change%'
+                },
+                { 'id': 'invalid-date-notification' }
               ]
             },
 
@@ -64,7 +87,7 @@
               'inner': [
                 { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
                   'onclick': '%save-click%' },
-                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+                { 'id': 'save-notification', 'class': 'd-inline-flex' }
               ]
             }
           ]
@@ -96,6 +119,9 @@
             }
           ]
         },  // end question_entry
+
+        // alert message
+        'alert_message': { 'tag': 'span', 'class': 'alert alert-light text-%message-type%', 'inner': '%message-text%' },
 
         // message to display when user is not logged in
         'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
@@ -129,7 +155,8 @@
         // get dataset for rendering
         const self = this;
         let questionData = {};
-        let deadline;
+        let ansDeadline;
+        let rankDeadline;
 
         // login
         let username;
@@ -158,24 +185,44 @@
             renderQuestions();
           },
 
-          // handle deadline change
-          'dl-change': async ( event ) => {
+          // handle change of deadline for answering questions
+          'ans-dl-change': async ( event ) => {
             // prevent unexpected form input events
             if ( event.srcElement.type !== 'date' && event.srcElement.type !== 'time' ) return;
 
-            if ( !deadline ) deadline = {};
-            deadline[ event.srcElement.type ] = event.srcElement.value;
+            if ( !ansDeadline ) ansDeadline = {};
+            ansDeadline[ event.srcElement.type ] = event.srcElement.value;
+          },
+
+          // handle change of deadline for answering questions
+          'rank-dl-change': async ( event ) => {
+            // prevent unexpected form input events
+            if ( event.srcElement.type !== 'date' && event.srcElement.type !== 'time' ) return;
+
+            if ( !rankDeadline ) rankDeadline = {};
+            rankDeadline[ event.srcElement.type ] = event.srcElement.value;
           },
 
           // handle saving questions to data store
           'save-click': async () => {
+            const ansDlObj = new Date( ansDeadline.date + ' ' + ansDeadline.time );
+            const rankDlObj = new Date( rankDeadline.date + ' ' + rankDeadline.time );
+            if ( rankDlObj < ansDlObj ) {
+              // warn that stored date was invalid and change the ranking deadline to one day after the deadline
+              // for answering questions
+              const invalidDateElem = self.element.querySelector( '#invalid-date-notification' );
+              setAlertWithTimeout( invalidDateElem, 'please choose ranking deadline after answer deadline',
+                                   'warning', 2000 );
+              return;
+            }
+
             await self.data.store.set( {
               // new question data
-              key: self.constants.key_questions, 'entries': questionData, 'deadline': deadline
+              'key': self.constants.key_questions, 'entries': questionData,
+              'answer_deadline': ansDeadline, 'ranking_deadline': rankDeadline
             } ) .then ( () => {       // successful update
                 const notificationSpan = self.element.querySelector( '#save-notification' );
-                notificationSpan.innerHTML = 'Success';
-                setTimeout( () => { notificationSpan.innerHTML = ''; }, 1000 );
+                setAlertWithTimeout( notificationSpan, 'Saved!', 'success' );
               },
               reason => {   // write failed
                 console.log( reason );
@@ -185,23 +232,31 @@
         } ) );
 
         // load initial data from store
-        await self.data.store.get( self.constants.key_questions ).then( questions => {
-            Object.assign( questionData, questions && questions.entries ? questions.entries : {} );
+        await self.data.store.get( self.constants.key_questions ).then( qStoreData => {
+            Object.assign( questionData, qStoreData && qStoreData.entries ? qStoreData.entries : {} );
 
-            // set deadline date & time
-            if ( questions && questions.deadline ) {
-              deadline = questions.deadline;
+            // set deadline date & time for answering questions
+            if ( qStoreData && qStoreData.answer_deadline ) {
+              ansDeadline = qStoreData.answer_deadline;
             } else {  // fill with current date & time
-              const today = new Date();
-              const curDate = today.getFullYear() + '-' +
-                              padNumber( today.getMonth() + 1, 2 ) + '-' + padNumber( today.getDate(), 2 );
-              const curTime = padNumber( today.getHours(), 2 ) + ':' + padNumber( today.getMinutes(), 2 );
-              deadline = { 'date': curDate, 'time': curTime };
+              ansDeadline = getNextDay( new Date() );
             }
-            const dateInput = self.element.querySelector( '#dl-date' );
-            dateInput.setAttribute( 'value', deadline.date );
-            const timeInput = self.element.querySelector( '#dl-time' );
-            timeInput.setAttribute( 'value', deadline.time );
+            const ansDateInput = self.element.querySelector( '#ans-dl-date' );
+            ansDateInput.setAttribute( 'value', ansDeadline.date );
+            const ansTimeInput = self.element.querySelector( '#ans-dl-time' );
+            ansTimeInput.setAttribute( 'value', ansDeadline.time );
+
+            // set deadline for ranking answers
+            if ( qStoreData && qStoreData.ranking_deadline ) {
+              rankDeadline = qStoreData.ranking_deadline;
+            } else {
+              const ansDlObj = new Date( ansDeadline.date + ' ' + ansDeadline.time );
+              rankDeadline = getNextDay( ansDlObj );
+            }
+            const rankDateInput = self.element.querySelector( '#rank-dl-date' );
+            rankDateInput.setAttribute( 'value', rankDeadline.date );
+            const rankTimeInput = self.element.querySelector( '#rank-dl-time' );
+            rankTimeInput.setAttribute( 'value', rankDeadline.time );
 
             // render questions
             renderQuestions();
@@ -253,11 +308,26 @@
           } );
         }
 
+        function getNextDay( date ) {
+          // get the next day, at current time
+          const nxtDayDate = date.getFullYear() + '-' + padNumber( date.getMonth() + 1, 2 )
+                             + '-' + padNumber( date.getDate() + 1, 2 );
+          const curTime = padNumber( date.getHours(), 2 ) + ':' + padNumber( date.getMinutes(), 2 );
+          return { 'date': nxtDayDate, 'time': curTime };
+        }
+
         // create question ID from text
         function getQuestionId( questionText ) {
           // use a truncated SHA-256 as new question ID
           const hashObj = CryptoJS.SHA256( questionText.trim() );
           return hashObj.toString().substring( 0, self.constants.truncate_length );
+        }
+
+        function setAlertWithTimeout( alertElem, message, type, timeout=1000 ) {
+          $.setContent( alertElem, $.html( self.html.alert_message, {
+            'message-text': message, 'message-type': type
+          } ) );
+          setTimeout( () => { alertElem.innerHTML = ''; }, timeout );
         }
 
         function padNumber( number, numDigits, prefix='0' ) {
