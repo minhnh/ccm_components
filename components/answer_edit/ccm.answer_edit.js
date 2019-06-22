@@ -33,13 +33,15 @@
         'main': {
           'inner': [
             // area for deadline timer
-            { 'id': 'deadline', 'class': 'mb-3 row m-1', 'inner': [
-              {
-                'tag': 'label', 'class': 'input-group-prepend col-sm-0 p-1 mt-2 text-secondary',
-                'inner': 'Remaining time', 'for': 'deadline-timer'
-              },
-              { 'id': 'deadline-timer', 'class': 'col-sm-0' }
-            ] },
+            {
+              'id': 'deadline', 'class': 'mb-3 row m-1', 'inner': [
+                {
+                  'tag': 'label', 'class': 'input-group-prepend col-sm-0 p-1 mt-2 text-secondary',
+                  'inner': 'Remaining time', 'for': 'deadline-timer'
+                },
+                { 'id': 'deadline-timer', 'class': 'col-sm-0' }
+              ]
+            },
             // area for question and answer
             { 'id': 'content' },
             // area for save button
