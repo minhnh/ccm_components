@@ -18,6 +18,8 @@
 
       'comp_sortable': [ 'ccm.component', '../../components/sortable/ccm.sortable.js' ],
 
+      'comp_countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ],
+
       'user': [
         'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
@@ -35,6 +37,7 @@
         'main': {
           'id': 'main',
           'inner': [
+            { 'id': 'ranking-deadline' },
             { 'id': 'ranking' },
             {
               'id': 'submit',
@@ -45,7 +48,7 @@
               ]
             }
           ]
-        },
+        },  // end 'main'
 
         // HTML config for a question and answers
         'rank_entry': {
@@ -68,6 +71,16 @@
             },
             { 'id': 'answers' }
           ]
+        },  // end 'rank_entry'
+
+        'deadline_timer': {
+          'id': 'deadline', 'class': 'mb-2 row m-1', 'inner': [
+            {
+              'tag': 'label', 'class': 'input-group-prepend col-sm-0 p-1 mt-2 text-secondary',
+              'inner': '%label%', 'for': 'deadline-timer'
+            },
+            { 'id': 'deadline-timer', 'class': 'col-sm-0' }
+          ]
         },
 
         // message to display when user is not logged in
@@ -87,9 +100,6 @@
       this.ready = async () => {
         // set shortcut to help functions
         $ = this.ccm.helper;
-
-        // logging of 'ready' event
-        this.logger && this.logger.log( 'ready', $.privatize( this, true ) );
       };
 
       this.start = async () => {
@@ -113,73 +123,116 @@
           return;
         }
 
-        // has logger instance? => log 'start' event
-        self.logger && self.logger.log( 'start' );
-
-        // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main, {
-          // save ranking event handler
-          'save-click': async ( event ) => {
-            if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
-            for ( qId in sortableObjects ) {
-              const rankings = sortableObjects[ qId ].getRanking();
-              userData[ 'ranking' ][ qId ] = {};
-              for ( rankNum in rankings ) {
-                userData[ 'ranking' ][ qId ][ rankings[ rankNum ] ] = rankNum;
-              }
-            }
-            await self.data.store.set( userData ).then( () => {
-              const notificationSpan = self.element.querySelector( '#save-notification' );
-              notificationSpan.innerText = 'Success';
-              setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
-            } );
-          }  // end event handler
-        } ) );  // end $.setContent()
-
-        // get page fragments
-        const rankingElem = self.element.querySelector( '#ranking' );
-
-        // load user data
-        self.data.store.get( username ).then( async ud => {
-            userData = ud;
-
-            // load questions and answers from store
-            self.data.store.get( self.constants.key_questions ).then(
-              questions => {
-                questions && questions.entries && Object.keys( questions.entries ).forEach( async questionId => {
-                  qaData[ questionId ] = {};
-                  qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
-                  self.data.store.get( self.constants.key_ans_prefix + questionId ).then( async answers => {
-                    if ( !answers ) {
-                      qaData[ questionId ][ 'answers' ] = {};
-                      return;
-                    }
-                    qaData[ questionId ][ 'answers' ] = answers;
-                    // sample answers
-                    selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
-                    // render ranking entry
-                    const docFrag = await renderAnswerRanking( questionId, qaData[ questionId ][ 'question' ],
-                                                         selectedAns, answers[ 'entries' ] );
-                    rankingElem.appendChild( docFrag );
-                  },
-                  reason => console.log( reason )                 // read from data store failed
-                  ).catch( err => console.log( err.message ) );   // unhandled exception
-                } );
-              },
-              reason => console.log( reason )               // read from data store failed
-            ).catch( err => console.log( err.message ) );   // unhandled exception
-
+        // get question entries and deadlines
+        const questionEntries = {};
+        let ansDeadline = null;
+        let rankDeadline = null;
+        await self.data.store.get( self.constants.key_questions ).then(
+          questionStore => {
+            if ( !questionStore ) return;
+            if ( questionStore.answer_deadline ) ansDeadline = questionStore.answer_deadline;
+            if ( questionStore.ranking_deadline ) rankDeadline = questionStore.ranking_deadline;
+            if ( questionStore.entries ) Object.assign( questionEntries, questionStore.entries );
           },
-          reason => console.log( reason )               // read from data store failed
-        ).catch( err => console.log( err.message ) );   // unhandled exception
+          reason => console.log( reason )               // read from question store failed
+        ).catch( err => console.log( err ) );   // unhandled exception;
+
+        // if ansDeadline is specified, wait until the deadline for answering questions is finished,
+        // otherwise render content
+        if ( ansDeadline ) {
+          $.setContent( self.element,  $.html( self.html.deadline_timer, {
+            'label': 'Answer ranking available in:'
+          } ) );
+          const ansDlTimerElem = self.element.querySelector( '#deadline-timer' );
+          await self.comp_countdown.start( {
+            root: ansDlTimerElem,
+            'deadline': ansDeadline,
+            'onfinish': () => renderContent()
+          } );
+        } else {
+          renderContent();
+        }
+
+        ////////////////////
+        // FUNCTIONS
+        ////////////////////
+
+        function renderContent() {
+          // render main HTML structure
+          $.setContent( self.element, $.html( self.html.main, {
+            // save ranking event handler
+            'save-click': async ( event ) => {
+              if ( !( 'ranking' in userData ) ) userData[ 'ranking' ] = {};
+              for ( qId in sortableObjects ) {
+                const rankings = sortableObjects[ qId ].getRanking();
+                userData[ 'ranking' ][ qId ] = {};
+                for ( rankNum in rankings ) {
+                  userData[ 'ranking' ][ qId ][ rankings[ rankNum ] ] = rankNum;
+                }
+              }
+              await self.data.store.set( userData ).then( () => {
+                const notificationSpan = self.element.querySelector( '#save-notification' );
+                notificationSpan.innerText = 'Success';
+                setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
+              } );
+            }  // end event handler
+          } ) );  // end $.setContent()
+
+          // get page fragments
+          const rankingDlElem = self.element.querySelector( '#ranking-deadline' );
+          const rankingElem = self.element.querySelector( '#ranking' );
+
+          // handle ranking deadline timer, remove save button on timer finish
+          $.setContent( rankingDlElem,  $.html( self.html.deadline_timer, {
+            'label': 'Remaining time:'
+          } ) );
+          const rankDlTimerElem = rankingDlElem.querySelector( '#deadline-timer' );
+          self.comp_countdown.start( {
+            root: rankDlTimerElem,
+            'deadline': rankDeadline,
+            'onfinish': () => {
+              const saveElem = self.element.querySelector( '#submit' );
+              saveElem.innerHTML = '';
+            }
+          } );
+
+          // load user data
+          self.data.store.get( username ).then( async ud => {
+              userData = ud;
+
+              // load answers from store
+              Object.keys( questionEntries ).forEach( async questionId => {
+                qaData[ questionId ] = {};
+                qaData[ questionId ][ 'question' ] = questionEntries[ questionId ];
+                self.data.store.get( self.constants.key_ans_prefix + questionId ).then( async answers => {
+                  if ( !answers ) {
+                    qaData[ questionId ][ 'answers' ] = {};
+                    return;
+                  }
+                  qaData[ questionId ][ 'answers' ] = answers;
+                  // sample answers
+                  selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
+                  // render ranking entry
+                  const docFrag = await renderAnswerRanking( questionId, qaData[ questionId ][ 'question' ],
+                                                      selectedAns, answers[ 'entries' ] );
+                  rankingElem.appendChild( docFrag );
+                },
+                reason => console.log( reason )                 // read from data store failed
+                ).catch( err => console.log( err.message ) );   // unhandled exception
+              } );
+            },
+            reason => console.log( reason )               // read from data store failed
+          ).catch( err => console.log( err.message ) );   // unhandled exception
+
+        }  // end renderContent()
 
         function getAnswers( userData, questionId, allAnswers ) {
           // collection of selected answers to return
-          const answers = {};
+          const selectedAnswers = {};
 
           // keep track of which indices already used
-          const indiceAvailable = {};
-          for ( indice in [ ...Array( self.constants.num_answer ).keys() ] ) indiceAvailable[indice] = true;
+          const indicesAvailable = {};
+          for ( index in [ ...Array( self.constants.num_answer ).keys() ] ) indicesAvailable[index] = true;
 
           // fill the user's ranked answers which are available in 'allAnswers'
           // this ensures updated answers to be resampled, and old ones to be discarded
@@ -187,46 +240,17 @@
             for ( rankedAnsKey in userData[ 'ranking' ][ questionId ] ) {
               if ( !( rankedAnsKey in allAnswers ) ) continue;
               const rankIndex = userData[ 'ranking' ][ questionId ][ rankedAnsKey ];
-              answers[ rankedAnsKey ] = rankIndex;
-              delete indiceAvailable[ rankIndex ];
+              selectedAnswers[ rankedAnsKey ] = rankIndex;
+              delete indicesAvailable[ rankIndex ];
             }
           }
 
           // sort answers by rank count
-          const ansByRankCount = {};
-          for ( ansKey in allAnswers ) {
-            // if there are enough entries in 'answers', stop the loop
-            if ( Object.keys( answers ).length === self.constants.num_answer ) break;
-
-            // skip the user's own answers
-            if ( userData[ 'answers' ][ questionId ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
-              continue;
-
-            // skip if answer is already considered
-            if ( ansKey in answers ) continue;
-
-            // add to 'answers' if this answers is already ranked by the current user, unlikely to be here
-            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] && Object.keys( indiceAvailable ).length !==0 ) {
-              // pop the first available rank index to store in 'answers'
-              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
-              answers[ ansKey ] = rankIndex;
-              delete indiceAvailable[ rankIndex ]
-              continue;
-            }
-
-            // else add to 'ansByRankCount'
-            const rankCount = Object.keys( allAnswers[ ansKey ][ 'ranked_by' ] ).length;
-            if ( rankCount in ansByRankCount ) {
-              ansByRankCount[ rankCount ].push( ansKey );
-            } else {
-              ansByRankCount[ rankCount ] = [ ansKey ];
-            }
-            allAnswers[ ansKey ][ 'ranked_by' ][ username ] = true;
-          }  // end sorting answers by rank count
+          const ansByRankCount = sortAnswersByRankCount( questionId, selectedAnswers, userData, allAnswers );
 
           // Fill 'answers' randomly, starting from ones with the least number of ranking
           Object.keys( ansByRankCount ).sort().forEach( rankCount => {
-            let ansCount = Object.keys( answers ).length;
+            let ansCount = Object.keys( selectedAnswers ).length;
 
             // if there are enough entries in 'answers', stop the loop
             if ( ansCount === self.constants.num_answer ) return;
@@ -240,17 +264,53 @@
               const selectedAnsKey = answerKeys.splice( randIndex, 1 )[ 0 ];
 
               // pop the first available rank index to store in 'answers'
-              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
-              answers[ selectedAnsKey ] = rankIndex;
-              delete indiceAvailable[ rankIndex ]
+              const rankIndex = Object.keys( indicesAvailable )[ 0 ];
+              selectedAnswers[ selectedAnsKey ] = rankIndex;
+              delete indicesAvailable[ rankIndex ]
 
               // update 'ansCount'
-              ansCount = Object.keys( answers ).length;
+              ansCount = Object.keys( selectedAnswers ).length;
             }
           } );  // end sampling for answers
 
-          return answers;
+          return selectedAnswers;
         }  // end getAnswers()
+
+        function sortAnswersByRankCount( questionId, selectedAnswers, userData, allAnswers ) {
+          const ansByRankCount = {};
+          for ( ansKey in allAnswers ) {
+            // if there are enough entries in 'answers', stop the loop
+            if ( Object.keys( selectedAnswers ).length === self.constants.num_answer ) break;
+
+            // skip the user's own answers
+            if ( userData[ 'answers' ][ questionId ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
+              continue;
+
+            // skip if answer is already considered
+            if ( ansKey in selectedAnswers ) continue;
+
+            // add to 'answers' if this answers is already ranked by the current user, unlikely to be here
+            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] && Object.keys( indiceAvailable ).length !==0 ) {
+              // pop the first available rank index to store in 'answers'
+              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
+              selectedAnswers[ ansKey ] = rankIndex;
+              delete indiceAvailable[ rankIndex ]
+              continue;
+            }
+
+            // else add to 'ansByRankCount'
+            const rankCount = Object.keys( allAnswers[ ansKey ][ 'ranked_by' ] ).length;
+            if ( rankCount in ansByRankCount ) {
+              ansByRankCount[ rankCount ].push( ansKey );
+            } else {
+              ansByRankCount[ rankCount ] = [ ansKey ];
+            }
+            allAnswers[ ansKey ][ 'ranked_by' ][ username ] = true;
+          }
+
+          return ansByRankCount;
+
+        }  // end sortAnswersByRankCount()
 
         async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
           const qaRankingFragment = document.createDocumentFragment();
@@ -285,6 +345,8 @@
 
           return qaRankingFragment;
         }  // end renderAnswerRanking()
+
+        function getDateObj( dateDict ) { return new Date( dateDict.date + ' ' + dateDict.time ) };
 
       };  // end start()
     }  // end Instance()
