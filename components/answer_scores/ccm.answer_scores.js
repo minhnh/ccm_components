@@ -20,6 +20,8 @@
         [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
       ],
 
+      'comp_countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ],
+
       // predefined values
       'constants' : {
         'key_questions': 'questions',   // key of store document containing question entries
@@ -120,7 +122,17 @@
             { 'tag': 'td', 'class': 'answer-row-score text-center' },
             { 'tag': 'td', 'class': 'answer-row-num-ranking text-center' },
           ]
-        }  // end answer_row
+        },  // end answer_row
+
+        'deadline_timer': {
+          'id': 'deadline', 'class': 'mb-2 row m-1', 'inner': [
+            {
+              'tag': 'label', 'class': 'input-group-prepend col-sm-0 p-1 mt-2 text-secondary',
+              'inner': '%label%', 'for': 'deadline-timer'
+            },
+            { 'id': 'deadline-timer', 'class': 'col-sm-0' }
+          ]
+        },  // end 'deadline_timer'
       },
 
       'css': [ 'ccm.load',
@@ -142,54 +154,77 @@
         // get dataset for rendering
         const self = this;
 
+        // keep track of which question is currently selected
         const isQuestionSelected = {};
 
-        // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main ) );
-        // get page fragments
-        const contentRowDiv = self.element.querySelector( '#content-row' );
-        const questionTabsDiv = contentRowDiv.querySelector( '#question-tabs' );
-        const answerPanelDiv = contentRowDiv.querySelector( '#answer-panel' );
+        // get question entries and deadlines
+        const questionEntries = {};
+        let rankDeadline = null;
+        await self.data.store.get( self.constants.key_questions ).then(
+          questionStore => {
+            if ( !questionStore ) return;
+            if ( questionStore.ranking_deadline ) rankDeadline = questionStore.ranking_deadline;
+            if ( questionStore.entries ) Object.assign( questionEntries, questionStore.entries );
+          },
+          reason => console.log( reason )               // read from question store failed
+        ).catch( err => console.log( err ) );   // unhandled exception;
 
-        // login
-        self.user && await self.user.login().then ( () => {
-          const username = self.user.data().user;
-
-          // load questions and answers from store
-          self.data.store.get( self.constants.key_questions ).then(
-            questions => {
-              // show first tab as active
-              questions && questions.entries && Object.keys( questions.entries ).forEach( ( questionId, index ) => {
-                self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
-                  if ( !answers || !answers.entries ) {
-                    return;
-                  }
-
-                  const isActive = ( index === 0 ) ? true : false;
-                  isQuestionSelected[ questionId ] = isActive;
-                  renderQA( questionId, questions.entries[ questionId ], answers.entries, isActive );
-                },
-                reason => console.log( 'get answers rejected: ' + reason )
-                ).catch( err => console.log( 'get answers failed: ' + err ) );
-              } );
-            },
-            reason => console.log( 'get questions rejected: ' + reason )
-          ).catch( err => console.log( 'get questions failed: ' + err.error ) );
-        },
-        reason => {
-          console.log( 'login rejected: ' + reason );
-        } ).catch( ( exception ) => console.log( 'login failed: ' + exception.error ) );
+        // if rankDeadline is specified, wait until the deadline for ranking answers is finished,
+        // otherwise render content
+        if ( rankDeadline ) {
+          $.setContent( self.element,  $.html( self.html.deadline_timer, {
+            'label': 'Answer scores available in:'
+          } ) );
+          const rankDlTimerElem = self.element.querySelector( '#deadline-timer' );
+          await self.comp_countdown.start( {
+            root: rankDlTimerElem,
+            'deadline': rankDeadline,
+            'onfinish': async () => { await renderContent(); }
+          } );
+        } else {
+          await renderContent();
+        }
 
         ////////////////////
         // FUNCTIONS
         ////////////////////
 
-        function renderQA( questionId, questionText, answers, isActive ) {
-          questionTabsDiv.appendChild( getQuestionTab( questionId, questionText, isActive ) );
-          answerPanelDiv.appendChild( getAnswerPanel( questionId, answers, isActive ) );
-        }  // end renderQA()
+        async function renderContent() {
+          // render main HTML structure
+          $.setContent( self.element, $.html( self.html.main ) );
+          // get page fragments
+          const contentRowDiv = self.element.querySelector( '#content-row' );
+          const questionTabsDiv = contentRowDiv.querySelector( '#question-tabs' );
+          const answerPanelDiv = contentRowDiv.querySelector( '#answer-panel' );
 
-        function getQuestionTab( questionId, questionText, isActive ) {
+          // login
+          self.user && await self.user.login().then ( () => {
+            // render questions and their answers, set first question tab and answer panel as active
+            Object.keys( questionEntries ).forEach( ( questionId, index ) => {
+              self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
+                if ( !answers || !answers.entries ) {
+                  return;
+                }
+
+                const isActive = ( index === 0 ) ? true : false;
+                isQuestionSelected[ questionId ] = isActive;
+
+                // add question tab and answer panel
+                questionTabsDiv.appendChild( getQuestionTab( questionTabsDiv, answerPanelDiv, questionId,
+                                                             questionEntries[ questionId ], isActive )
+                );
+                answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive ) );
+              },
+              reason => console.log( 'get answers rejected: ' + reason )
+              ).catch( err => console.log( 'get answers failed: ' + err ) );
+            } );
+          },
+          reason => {
+            console.log( reason );
+          } ).catch( ( exception ) => console.log( exception ) );
+        }  // end renderContent()
+
+        function getQuestionTab( questionTabsElem, ansPanelsElem, questionId, questionText, isActive ) {
           const questionTab = $.html( self.html.question_tab, {
             'question_id': questionId, 'question_text': questionText,
 
@@ -203,7 +238,7 @@
               // set clicked question tab to active and show corresponding answer panel, update 'isQuestionSelected'
               setQuestionTabActive( event.srcElement, true );
               isQuestionSelected[ questionId ] = true;
-              const ansPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( questionId ) )
+              const ansPanel = ansPanelsElem.querySelector( '#' + getAnswerPanelId( questionId ) )
               setAnsPanelActive( ansPanel, true );
 
               // set other question tabs to inactive and hide their answer panels
@@ -215,9 +250,9 @@
                 if ( !isQuestionSelected[ checkQuestionId ] ) continue;
 
                 // update previously active tab and answer panel
-                const checkQTab = questionTabsDiv.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
+                const checkQTab = questionTabsElem.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
                 setQuestionTabActive( checkQTab, false );
-                const checkAnsPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
+                const checkAnsPanel = ansPanelsElem.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
                 setAnsPanelActive( checkAnsPanel, false );
                 isQuestionSelected[ checkQuestionId ] = false;
               }
