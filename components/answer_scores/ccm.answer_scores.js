@@ -73,33 +73,43 @@
           ]  // end main.inner
         },  // end main
 
-        // HTML configs of a table which displays answer and scores
-        'answer_table': {
-          'class': 'table table-hover',
-          'tag': 'table',
-          'inner': [
-            // table header
-            {
-              'class': 'answer-table-head',
-              'tag': 'thead',
-              'inner': [ {
-                'tag': 'tr',
-                'inner': [
-                  // 4 columns
-                  { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
-                  { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
-                  { 'tag': 'th', 'class': 'col-1 text-center', 'inner': 'Score' },
-                  { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '# rankings' },
-                ]
-              } ]
-            },
-            // table body
-            {
-              'class': 'answer-table-body',
-              'tag': 'tbody'
-            },
-          ]
-        },  // end answer_table
+        // HTML configs for the control element which display a question
+        'question_tab': {
+          'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab', 'inner': '%question_text%',
+          'href': '#a_%question_id%', 'aria-controls': 'a_%question_id%', 'onclick': '%click%'
+        },  // end question_tab
+
+        // HTML configs for the answer panel to display when a question tab is clicked
+        'answer_panel': {
+          'id': 'a_%question_id%', 'role': 'tabpanel', 'aria-labelledby': 'q_%question_id%',
+          'inner': [ {
+            // HTML configs of a table which displays answer and their combined ranking scores
+            'class': 'table table-hover',
+            'tag': 'table',
+            'inner': [
+              // table header
+              {
+                'class': 'answer-table-head',
+                'tag': 'thead',
+                'inner': [ {
+                  'tag': 'tr',
+                  'inner': [
+                    // 4 columns
+                    { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
+                    { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
+                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': 'Score' },
+                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '# rankings' },
+                  ]
+                } ]
+              },
+              // table body
+              {
+                'class': 'answer-table-body',
+                'tag': 'tbody'
+              },
+            ]
+          } ]
+        },  // answer_panel
 
         // HTML configs of a row containing answer info
         'answer_row': {
@@ -170,67 +180,59 @@
           console.log( 'login rejected: ' + reason );
         } ).catch( ( exception ) => console.log( 'login failed: ' + exception.error ) );
 
+        ////////////////////
+        // FUNCTIONS
+        ////////////////////
+
         function renderQA( questionId, questionText, answers, isActive ) {
           questionTabsDiv.appendChild( getQuestionTab( questionId, questionText, isActive ) );
           answerPanelDiv.appendChild( getAnswerPanel( questionId, answers, isActive ) );
         }  // end renderQA()
 
         function getQuestionTab( questionId, questionText, isActive ) {
-          const questionTab = document.createElement( 'a' );
-          questionTab.id = getQuestionTabId( questionId );
-          setQuestionTabActive( questionTab, isActive );
-          setAttributes( questionTab, {
-            'data-toggle': "list",
-            'href': '#' + getAnswerPanelId( questionId ),
-            'role': 'tab',
-            'aria-controls': getAnswerPanelId( questionId )
-          } );
-          questionTab.innerHTML = questionText;
-          questionTab.addEventListener( 'click', ( event ) => {
-            event.preventDefault();
+          const questionTab = $.html( self.html.question_tab, {
+            'question_id': questionId, 'question_text': questionText,
 
-            // skip event if tab already selected
-            if ( isQuestionSelected[ questionId ] ) return;
+            // handler for when a question menu is clicked
+            'click': event => {
+              event.preventDefault();
 
-            // set clicked question tab to active and show corresponding answer panel, update 'isQuestionSelected'
-            setQuestionTabActive( event.srcElement, true );
-            isQuestionSelected[ questionId ] = true;
-            const ansPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( questionId ) )
-            setAnsPanelActive( ansPanel, true );
+              // skip event if tab already selected
+              if ( isQuestionSelected[ questionId ] ) return;
 
-            // set other question tabs to inactive and hide their answer panels
-            for ( checkQuestionId in isQuestionSelected ) {
-              // skip current question
-              if ( checkQuestionId === questionId ) continue;
+              // set clicked question tab to active and show corresponding answer panel, update 'isQuestionSelected'
+              setQuestionTabActive( event.srcElement, true );
+              isQuestionSelected[ questionId ] = true;
+              const ansPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( questionId ) )
+              setAnsPanelActive( ansPanel, true );
 
-              // skip if the checked question is not currently selected
-              if ( !isQuestionSelected[ checkQuestionId ] ) continue;
+              // set other question tabs to inactive and hide their answer panels
+              for ( checkQuestionId in isQuestionSelected ) {
+                // skip current question
+                if ( checkQuestionId === questionId ) continue;
 
-              // update previously active tab and answer panel
-              const checkQTab = questionTabsDiv.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
-              setQuestionTabActive( checkQTab, false );
-              const checkAnsPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
-              setAnsPanelActive( checkAnsPanel, false );
-              isQuestionSelected[ checkQuestionId ] = false;
+                // skip if the checked question is not currently selected
+                if ( !isQuestionSelected[ checkQuestionId ] ) continue;
+
+                // update previously active tab and answer panel
+                const checkQTab = questionTabsDiv.querySelector( '#' + getQuestionTabId( checkQuestionId ) );
+                setQuestionTabActive( checkQTab, false );
+                const checkAnsPanel = answerPanelDiv.querySelector( '#' + getAnswerPanelId( checkQuestionId ) );
+                setAnsPanelActive( checkAnsPanel, false );
+                isQuestionSelected[ checkQuestionId ] = false;
+              }
             }
-          } );
+          } );  // end $.html()
+
+          setQuestionTabActive( questionTab, isActive );
           return questionTab;
         }  // end getQuestionTab()
 
         function getAnswerPanel( questionId, answers, isActive ) {
           // create answer panel
-          const ansPanelDiv = document.createElement( 'div' );
-          ansPanelDiv.id = getAnswerPanelId( questionId );
+          const ansPanelDiv = $.html( self.html.answer_panel, { 'question_id': questionId } );
           setAnsPanelActive( ansPanelDiv, isActive );
-          setAttributes( ansPanelDiv, {
-            'role': 'tabpanel',
-            'aria-labelledby': getQuestionTabId( questionId )
-          } );
-
-          // create and fill answer table
-          const ansTable = $.html( self.html.answer_table );
-          ansPanelDiv.appendChild( ansTable );
-          const ansTableBody = ansTable.querySelector( '.answer-table-body' );
+          const ansTableBody = ansPanelDiv.querySelector( '.answer-table-body' );
 
           // organize answer scores, fill table rows by descending scores
           const ansScores = organizeAnswerScores( answers );
@@ -308,12 +310,6 @@
         function setAnsPanelActive( ansPanelElem, isActive ) {
           ansPanelElem.className = isActive ? 'tab-pane fade show active' : 'tab-pane fade';
         }  // end setAnsPanelActive()
-
-        function setAttributes( element, attribtues ) {
-            for ( var key in attribtues ) {
-                element.setAttribute(key, attribtues[key]);
-            }
-        }  // end setAttributes()
 
       };  // end start
 

@@ -50,7 +50,7 @@
               'inner': [
                 { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
                   'onclick': '%save-click%' },
-                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible text-success' }
               ]
             }
           ]

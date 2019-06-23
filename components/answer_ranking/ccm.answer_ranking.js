@@ -40,11 +40,11 @@
             { 'id': 'ranking-deadline' },
             { 'id': 'ranking' },
             {
-              'id': 'submit',
+              'id': 'submit', 'class': 'mt-3',
               'inner': [
                 { 'id': 'save-button', 'tag': 'button', 'type': 'button', 'class': 'btn btn-info', 'inner': 'Save',
                   'onclick': '%save-click%' },
-                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible' }
+                { 'id': 'save-notification', 'tag': 'span', 'class': 'alert alert-dismissible  text-success' }
               ]
             }
           ]
@@ -58,7 +58,9 @@
               'inner': [
                 {
                   'class': 'input-group-prepend col-sm-0 p-1',
-                  'inner': [ { 'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%', 'inner': 'Question' } ]
+                  'inner': [ {
+                    'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%', 'inner': 'Question'
+                  } ]
                 },
                 {
                   'class': 'col-sm-0',
