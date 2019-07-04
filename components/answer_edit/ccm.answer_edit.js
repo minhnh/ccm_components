@@ -68,9 +68,10 @@
                   } ]
                 },
                 {
-                  'class': 'col-sm-0', 'inner': [ {
-                    'tag': 'input', 'type': 'text', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
-                    'id': 'q_%question_id%_question', 'value': '%question_text%'
+                  'class': 'col-sm-8', 'inner': [ {
+                    'tag': 'textarea', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
+                    'style': 'resize: none; overflow: auto;',
+                    'id': 'q_%question_id%_question', 'inner': '%question_text%'
                   } ]
                 }
               ]
@@ -84,8 +85,8 @@
                   } ]
                 },
                 {
-                  'class': 'col-lg-0', 'inner': [ {
-                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer', 'style': 'resize: both;',
+                  'class': 'col-lg-8', 'inner': [ {
+                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer', 'style': 'resize: vertical;',
                     'id': 'q_%question_id%_answer', 'inner': '%answer_text%'
                   } ]
                 }

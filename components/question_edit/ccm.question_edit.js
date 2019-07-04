@@ -105,8 +105,8 @@
             },
             // question input
             {
-              'tag': 'input', 'class': 'form-control', 'type': 'text', 'aria-label': 'Question',
-              'aria-describedby': 'q_%question_id%_label', 'name': 'q_%question_id%', 'value': '%question_text%',
+              'tag': 'textarea', 'class': 'form-control col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
+              'aria-describedby': 'q_%question_id%_label', 'name': 'q_%question_id%', 'inner': '%question_text%',
               'onblur': '%blur%'
             },
             // button to remove question
