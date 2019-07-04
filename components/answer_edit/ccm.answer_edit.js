@@ -148,7 +148,7 @@
         $.setContent( self.element, $.html( self.html.main, {
           // save ranking event handler
           'save-click': async ( event ) => {
-            let payload = { key : username, answers: {} };
+            let payload = { key : username, answers: {}, ranking: {} };
 
             Object.keys( qaData ).forEach( ( key ) => {
               const questionIdHtml = self.constants.qa_prefix + key;
