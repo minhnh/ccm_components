@@ -57,7 +57,10 @@ ccm.files[ 'question_answers_data.js' ] = {
                 "text": "I don't know with $\\gamma + \\beta$ as test equations",
                 "authors": { "mnguy12s": true }, "ranked_by": { 'username01': 0.0 }
             },
-            "answer_hash_06": { "text": "I don't know 1", "authors": { "username03": true }, "ranked_by": { 'username02': 0.2, 'username01': 0.6 } },
+            "answer_hash_06": {
+                "text": "I don't know 1", "authors": { "username03": true, "mnguy12s": true },
+                "ranked_by": { 'username02': 0.2, 'username01': 0.6 }
+            },
             "answer_hash_07": { "text": "I don't know 2", "authors": { "username04": true }, "ranked_by": { 'username02': 1.0, 'username03': 0.6 } },
             "answer_hash_08": { "text": "I don't know 3", "authors": { "username05": true }, "ranked_by": {} },
             "answer_hash_09": { "text": "I don't know 4", "authors": { "username06": true }, "ranked_by": {} },
