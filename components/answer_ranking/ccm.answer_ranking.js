@@ -201,6 +201,9 @@
           // load user data
           self.data.store.get( username ).then( async ud => {
               userData = ud;
+              if ( !userData ) userData = { key : username, answers: {}, ranking: {} };
+              if ( !userData.ranking ) userData.ranking = {};
+              if ( !userData.answers ) userData.answers = {};
 
               // load answers from store
               Object.keys( questionEntries ).forEach( async questionId => {
