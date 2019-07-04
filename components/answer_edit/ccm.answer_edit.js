@@ -61,7 +61,7 @@
           'inner': [
             // question label and text
             {
-              'class': 'input-group row m-1', 'inner': [
+              'class': 'input-group row m-1 mt-3', 'inner': [
                 {
                   'class': 'input-group-prepend col-sm-0 p-1', 'inner': [ {
                     'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%_question', 'inner': 'Question'
@@ -70,24 +70,23 @@
                 {
                   'class': 'col-sm-8', 'inner': [ {
                     'tag': 'textarea', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
-                    'style': 'resize: none; overflow: auto;',
-                    'id': 'q_%question_id%_question', 'inner': '%question_text%'
+                    'style': 'resize: none; overflow: auto;', 'id': 'q_%question_id%_question'
                   } ]
                 }
               ]
             },
             // answer label and text box
             {
-              'class': 'input-group row mb-3 m-1', 'inner': [
+              'class': 'input-group row m-1 mb-3', 'inner': [
                 {
-                  'class': 'input-group-prepend col-md-0', 'inner': [ {
-                    'tag': 'label', 'class': 'p-2 input-group-text', 'for': 'q_%question_id%_answer', 'inner': 'Answer'
+                  'class': 'input-group-prepend', 'inner': [ {
+                    'tag': 'label', 'class': 'input-group-text', 'for': 'q_%question_id%_answer', 'inner': 'Answer'
                   } ]
                 },
                 {
-                  'class': 'col-lg-8', 'inner': [ {
-                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer', 'style': 'resize: vertical;',
-                    'id': 'q_%question_id%_answer', 'inner': '%answer_text%'
+                  'class': 'col-md-8 p-0', 'inner': [ {
+                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer',
+                    'style': 'resize: vertical; overflow: auto;', 'id': 'q_%question_id%_answer'
                   } ]
                 }
               ]
@@ -215,9 +214,16 @@
         function renderQAPairs() {
           Object.keys( qaData ).forEach( ( questionId ) => {
             const answerText = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
-            const qaDiv = $.html( self.html.qa_entry, {
-              'question_id': questionId, 'question_text': qaData[ questionId ].question, 'answer_text': answerText
-            } );
+            const questionText = qaData[ questionId ].question ? qaData[ questionId ].question : '';
+
+            const qaDiv = $.html( self.html.qa_entry, { 'question_id': questionId } );
+
+            // to avoid issue with backlashes, set textarea values for question and answers manually:
+            const questionTextArea = qaDiv.querySelector( `#q_${ questionId }_question` );
+            questionTextArea.value = questionText;
+            const answerTextArea = qaDiv.querySelector( `#q_${ questionId }_answer` );
+            answerTextArea.value = answerText;
+
             contentElem.appendChild( qaDiv );
           } );
         }  // end renderQAPairs()

@@ -44,7 +44,7 @@
                 "inner": "<h5>Questions</h5>"
               }, {
                 "id": "answer-title-col",
-                "class": "col-6 p-2 list-group-item",
+                "class": "col-7 p-2 pl-3 list-group-item",
                 "inner": "<h5>Answers</h5>"
               } ]
             },  // end title-row
@@ -65,7 +65,7 @@
               }, {
                 // answer column containing answers and their scores
                 "id": "answer-col",
-                "class": "col-6 p-2",
+                "class": "col-7 p-3 pr-5 ml-3",
                 "inner": [ {
                   "id": "answer-panel",
                   "class": "tab-content"
@@ -77,7 +77,7 @@
 
         // HTML configs for the control element which display a question
         'question_tab': {
-          'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab', 'inner': '%question_text%',
+          'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab',
           'href': '#a_%question_id%', 'aria-controls': 'a_%question_id%', 'onclick': '%click%'
         },  // end question_tab
 
@@ -94,13 +94,14 @@
                 'class': 'answer-table-head',
                 'tag': 'thead',
                 'inner': [ {
-                  'tag': 'tr',
+                  'tag': 'tr', 'class': 'row',
                   'inner': [
                     // 4 columns
-                    { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
-                    { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
+                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '#' },
+                    { 'tag': 'th', 'class': 'col', 'inner': 'Answer' },
+                    { 'tag': 'th', 'class': 'col-1 d-none', 'inner': 'Username', 'id': 'answer-head-username' },
                     { 'tag': 'th', 'class': 'col-1 text-center', 'inner': 'Score' },
-                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '# rankings' },
+                    { 'tag': 'th', 'class': 'col-2 text-center', 'inner': '# rankings' },
                   ]
                 } ]
               },
@@ -115,12 +116,13 @@
 
         // HTML configs of a row containing answer info
         'answer_row': {
-          'tag': 'tr',
+          'tag': 'tr', 'class': 'row',
           'inner': [
-            { 'tag': 'th', 'class': 'answer-row-index' },
-            { 'tag': 'td', 'class': 'answer-row-text' },
-            { 'tag': 'td', 'class': 'answer-row-score text-center' },
-            { 'tag': 'td', 'class': 'answer-row-num-ranking text-center' },
+            { 'tag': 'td', 'class': 'col-1 text-center font-weight-bold answer-row-index' },
+            { 'tag': 'td', 'class': 'col answer-row-text' },
+            { 'tag': 'td', 'class': 'col-1 d-none answer-row-username' },
+            { 'tag': 'td', 'class': 'col-1 text-center answer-row-score' },
+            { 'tag': 'td', 'class': 'col-2 text-center answer-row-num-ranking' },
           ]
         },  // end answer_row
 
@@ -198,7 +200,13 @@
           const answerPanelDiv = contentRowDiv.querySelector( '#answer-panel' );
 
           // login
-          self.user && await self.user.login().then ( () => {
+          self.user && await self.user.login().then ( async () => {
+            // get user role for rendering content accordingly
+            let showUsername = false;
+            await self.data.store.get( 'role' ).then( roleInfo => {
+              if ( roleInfo.name === 'admin' || roleInfo.name === 'grader' ) showUsername = true;
+            } );
+
             // render questions and their answers, set first question tab and answer panel as active
             Object.keys( questionEntries ).forEach( ( questionId, index ) => {
               self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
@@ -213,7 +221,7 @@
                 questionTabsDiv.appendChild( getQuestionTab( questionTabsDiv, answerPanelDiv, questionId,
                                                              questionEntries[ questionId ], isActive )
                 );
-                answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive ) );
+                answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive, showUsername ) );
               },
               reason => console.log( 'get answers rejected: ' + reason )
               ).catch( err => console.log( 'get answers failed: ' + err ) );
@@ -226,7 +234,7 @@
 
         function getQuestionTab( questionTabsElem, ansPanelsElem, questionId, questionText, isActive ) {
           const questionTab = $.html( self.html.question_tab, {
-            'question_id': questionId, 'question_text': questionText,
+            'question_id': questionId,
 
             // handler for when a question menu is clicked
             'click': event => {
@@ -259,15 +267,24 @@
             }
           } );  // end $.html()
 
+          // set question text manually to avoid issues with backslashes
+          questionTab.innerText = questionText;
+
           setQuestionTabActive( questionTab, isActive );
           return questionTab;
         }  // end getQuestionTab()
 
-        function getAnswerPanel( questionId, answers, isActive ) {
+        function getAnswerPanel( questionId, answers, isActive, showUsername ) {
           // create answer panel
           const ansPanelDiv = $.html( self.html.answer_panel, { 'question_id': questionId } );
           setAnsPanelActive( ansPanelDiv, isActive );
           const ansTableBody = ansPanelDiv.querySelector( '.answer-table-body' );
+
+          // show username table header if user is grader or admin
+          if ( showUsername ) {
+            const usernameThElem = ansPanelDiv.querySelector( 'th#answer-head-username' );
+            usernameThElem.classList.remove( 'd-none' );
+          }
 
           // organize answer scores, fill table rows by descending scores
           const ansScores = organizeAnswerScores( answers );
@@ -275,29 +292,37 @@
           Object.keys( ansScores.ansByScore ).sort( ( a, b ) => b - a ).forEach( score => {
             ansScores.ansByScore[ score ].forEach( ansInfo => {
               const ansRow = $.html( self.html.answer_row );
-              fillAnswerTableRow( ansRow, ansIndex, ansInfo.text, score, ansInfo.numRankings );
+              fillAnswerTableRow( ansRow, ansIndex, ansInfo.text, score, ansInfo.numRankings,
+                                  ansInfo.authors, showUsername );
               ansTableBody.appendChild( ansRow );
               ansIndex += 1;
             } );
           } );
 
-          ansScores.unranked.forEach( ansText => {
+          ansScores.unranked.forEach( ansInfo => {
             const ansRow = $.html( self.html.answer_row );
-            fillAnswerTableRow( ansRow, ansIndex, ansText, 'unranked', 0 );
+            fillAnswerTableRow( ansRow, ansIndex, ansInfo.text, 'unranked', 0, ansInfo.authors, showUsername );
             ansTableBody.appendChild( ansRow );
             ansIndex += 1;
           } );
           return ansPanelDiv;
         }  // getAnswerPanel()
 
-        function fillAnswerTableRow( answerRowElem, ansIndex, ansText, score, numRankings ) {
-          const ansIndexCell = answerRowElem.querySelector( 'th.answer-row-index' );
+        function fillAnswerTableRow( answerRowElem, ansIndex, ansText, score, numRankings, authors, showUsername ) {
+          const ansIndexCell = answerRowElem.querySelector( 'td.answer-row-index' );
           const ansTextCell = answerRowElem.querySelector( 'td.answer-row-text' );
+          const ansUsernameCell = answerRowElem.querySelector( 'td.answer-row-username' );
           const ansScoreCell = answerRowElem.querySelector( 'td.answer-row-score' );
           const ansNumRankingCell = answerRowElem.querySelector( 'td.answer-row-num-ranking' );
 
+          // show usernames for answer if allowed
+          if ( showUsername ) {
+            ansUsernameCell.classList.remove( 'd-none' );
+            ansUsernameCell.innerText = authors.join( ', ' );
+          }
+
           ansIndexCell.innerHTML = ansIndex;
-          ansTextCell.innerHTML = ansText;
+          ansTextCell.innerText = ansText;
           ansScoreCell.innerHTML = score;
           ansNumRankingCell.innerHTML = numRankings;
         }
@@ -306,10 +331,12 @@
           // sort answers by their score
           const answerScores = { 'unranked': [], 'ansByScore': {} }
           for ( ansId in answers ) {
+            const authorList = answers[ ansId ].authors ? Object.keys( answers[ ansId ].authors ) : [];
+
             // seperate the unranked answer
             const numRankings = Object.keys( answers[ ansId ].ranked_by ).length;
             if ( numRankings === 0 ) {
-              answerScores.unranked.push( answers[ ansId ].text );
+              answerScores.unranked.push( { 'text': answers[ ansId ].text, 'authors': authorList } );
               continue;
             }
 
@@ -322,7 +349,7 @@
             ansScore = ansScore.toFixed( self.constants.score_decimal_points );
 
             // add answer info to 'answersByRankings'
-            const ansInfo = { 'text': answers[ ansId ].text, 'numRankings': numRankings };
+            const ansInfo = { 'text': answers[ ansId ].text, 'numRankings': numRankings, 'authors': authorList };
             if ( ansScore in answerScores.ansByScore ) {
               answerScores.ansByScore[ ansScore ].push( ansInfo );
             } else {
