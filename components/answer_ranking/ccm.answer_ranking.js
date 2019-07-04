@@ -63,10 +63,10 @@
                   } ]
                 },
                 {
-                  'class': 'col-sm-0',
+                  'class': 'col-sm-8',
                   'inner': [ {
-                    'tag': 'input', 'class': 'form-control-plaintext p-1 text-info', 'type': 'text', 'readonly': true,
-                    'id': 'q_%question_id%', 'value': '%question_text%'
+                    'tag': 'textarea', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
+                    'style': 'resize: none; overflow: auto;', 'id': 'q_%question_id%'
                   } ]
                 }
               ]
@@ -318,13 +318,14 @@
         }  // end sortAnswersByRankCount()
 
         async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
-          const qaRankingFragment = document.createDocumentFragment();
-          $.setContent( qaRankingFragment, $.html( self.html.rank_entry, {
-            'question_id': questionId, 'question_text': questionText
-          } ) );
+          const qaRankingEntry = $.html( self.html.rank_entry, { 'question_id': questionId } );
+
+          // set text field manually to avoid problems with backslashes
+          const questionTextArea = qaRankingEntry.querySelector( `#q_${ questionId }` );
+          questionTextArea.value = questionText;
 
           // render the answer ranking area
-          const answersDiv = qaRankingFragment.querySelector( '#answers' );
+          const answersDiv = qaRankingEntry.querySelector( '#answers' );
           const numAnswers = Object.keys( selectedAnswers ).length;
           if ( numAnswers < self.constants.num_answer ) {
             // render message about not enough answers for ranking
@@ -348,7 +349,7 @@
             } );
           }
 
-          return qaRankingFragment;
+          return qaRankingEntry;
         }  // end renderAnswerRanking()
 
         function getDateObj( dateDict ) { return new Date( dateDict.date + ' ' + dateDict.time ) };

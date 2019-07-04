@@ -77,7 +77,7 @@
 
         // HTML configs for the control element which display a question
         'question_tab': {
-          'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab', 'inner': '%question_text%',
+          'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab',
           'href': '#a_%question_id%', 'aria-controls': 'a_%question_id%', 'onclick': '%click%'
         },  // end question_tab
 
@@ -86,7 +86,7 @@
           'id': 'a_%question_id%', 'role': 'tabpanel', 'aria-labelledby': 'q_%question_id%',
           'inner': [ {
             // HTML configs of a table which displays answer and their combined ranking scores
-            'class': 'table table-hover',
+            'class': 'table table-hover ml-4',
             'tag': 'table',
             'inner': [
               // table header
@@ -94,13 +94,13 @@
                 'class': 'answer-table-head',
                 'tag': 'thead',
                 'inner': [ {
-                  'tag': 'tr',
+                  'tag': 'tr', 'class': 'row',
                   'inner': [
                     // 4 columns
-                    { 'tag': 'th', 'class': 'col-1', 'inner': '#' },
+                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '#' },
                     { 'tag': 'th', 'class': 'col-7', 'inner': 'Answer' },
                     { 'tag': 'th', 'class': 'col-1 text-center', 'inner': 'Score' },
-                    { 'tag': 'th', 'class': 'col-1 text-center', 'inner': '# rankings' },
+                    { 'tag': 'th', 'class': 'col-2 text-center', 'inner': '# rankings' },
                   ]
                 } ]
               },
@@ -115,12 +115,12 @@
 
         // HTML configs of a row containing answer info
         'answer_row': {
-          'tag': 'tr',
+          'tag': 'tr', 'class': 'row',
           'inner': [
-            { 'tag': 'th', 'class': 'answer-row-index' },
-            { 'tag': 'td', 'class': 'answer-row-text' },
-            { 'tag': 'td', 'class': 'answer-row-score text-center' },
-            { 'tag': 'td', 'class': 'answer-row-num-ranking text-center' },
+            { 'tag': 'td', 'class': 'col-1 text-center font-weight-bold answer-row-index' },
+            { 'tag': 'td', 'class': 'col-7 answer-row-text' },
+            { 'tag': 'td', 'class': 'col-1 text-center answer-row-score' },
+            { 'tag': 'td', 'class': 'col-2 text-center answer-row-num-ranking' },
           ]
         },  // end answer_row
 
@@ -226,7 +226,7 @@
 
         function getQuestionTab( questionTabsElem, ansPanelsElem, questionId, questionText, isActive ) {
           const questionTab = $.html( self.html.question_tab, {
-            'question_id': questionId, 'question_text': questionText,
+            'question_id': questionId,
 
             // handler for when a question menu is clicked
             'click': event => {
@@ -258,6 +258,9 @@
               }
             }
           } );  // end $.html()
+
+          // set question text manually to avoid issues with backslashes
+          questionTab.innerText = questionText;
 
           setQuestionTabActive( questionTab, isActive );
           return questionTab;
@@ -291,13 +294,13 @@
         }  // getAnswerPanel()
 
         function fillAnswerTableRow( answerRowElem, ansIndex, ansText, score, numRankings ) {
-          const ansIndexCell = answerRowElem.querySelector( 'th.answer-row-index' );
+          const ansIndexCell = answerRowElem.querySelector( 'td.answer-row-index' );
           const ansTextCell = answerRowElem.querySelector( 'td.answer-row-text' );
           const ansScoreCell = answerRowElem.querySelector( 'td.answer-row-score' );
           const ansNumRankingCell = answerRowElem.querySelector( 'td.answer-row-num-ranking' );
 
           ansIndexCell.innerHTML = ansIndex;
-          ansTextCell.innerHTML = ansText;
+          ansTextCell.innerText = ansText;
           ansScoreCell.innerHTML = score;
           ansNumRankingCell.innerHTML = numRankings;
         }

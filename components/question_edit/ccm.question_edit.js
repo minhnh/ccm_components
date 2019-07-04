@@ -106,8 +106,7 @@
             // question input
             {
               'tag': 'textarea', 'class': 'form-control col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
-              'aria-describedby': 'q_%question_id%_label', 'name': 'q_%question_id%', 'inner': '%question_text%',
-              'onblur': '%blur%'
+              'aria-describedby': 'q_%question_id%_label', 'id': 'q_%question_id%_text', 'onblur': '%blur%'
             },
             // button to remove question
             {
@@ -264,7 +263,7 @@
           reason => {   // read questions failed
             console.log( reason );
           }
-        ).catch( err => console.log( err.message ) );    // unhandled exception
+        ).catch( err => console.log( err ) );    // unhandled exception
 
         function renderQuestions() {
           const questionsElem = self.element.querySelector( '#questions' );
@@ -276,7 +275,7 @@
         }
 
         function renderQuestionDiv( questionId, questionText ) {
-          // replace '%question_id%' and '%question_text%' with appropriate values, handle events
+          // replace '%question_id%' with appropriate values, handle events
           const questionDiv = $.html( self.html.question_entry, {
             'question_id': questionId, 'question_text': questionText,
             // write text content to dataset when question field is unfocused
@@ -291,6 +290,9 @@
               renderQuestions();
             }
           } );
+          // since CCM HTML helper has issue with backslash ('\'), set question text manually
+          const qTextArea = questionDiv.querySelector( `#q_${ questionId }_text` );
+          qTextArea.value = questionText;
           return questionDiv;
         }  // end renderQuestionDiv()
 
