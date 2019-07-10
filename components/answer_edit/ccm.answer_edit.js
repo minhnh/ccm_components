@@ -10,15 +10,16 @@
 
     name: 'answer_edit',
 
-    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
-      'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
-        [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
-      ],
+      'components': {
+        'user': [
+          'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js'
+        ],
 
-      'comp_countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ],
+        'countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ]
+      },
 
       "data": { "store": [ "ccm.store" ] },
 
@@ -100,7 +101,9 @@
 
       'css': [ 'ccm.load',
         { url: '../../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
+        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' },
+        { url: '../../lib/css/fontawesome-all.min.css', type: 'css' },
+        { url: '../../lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
       ],
 
       'js': [
@@ -131,8 +134,12 @@
 
         // login
         let username;
-        self.user && await self.user.login().then ( () => {
-          username = self.user.data().user;
+        const userComp = await self.components.user.start( {
+          "root": self.element, "css": [ "ccm.load", self.css ],
+          "realm": "guest", "title": "Guest Mode: please enter any username"
+        } );
+        await userComp.login().then ( () => {
+          username = userComp.data().user;
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
@@ -200,9 +207,8 @@
         ).catch( err => console.log( err.message ) );   // unhandled exception
 
         const dlCountdownElem = self.element.querySelector( '#deadline-timer' );
-        await self.comp_countdown.start( {
-          root: dlCountdownElem,
-          'deadline': deadline,
+        await self.components.countdown.start( {
+          root: dlCountdownElem, 'deadline': deadline, 'css': [ "ccm.load", self.css ],
           'onfinish': () => {
             const saveElem = self.element.querySelector( '#save' );
             saveElem.innerHTML = '';

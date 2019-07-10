@@ -9,7 +9,7 @@
 
     name: 'countdown_timer',
 
-    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
       'html': {
