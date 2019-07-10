@@ -10,45 +10,37 @@
 
     name: 'question_answer',
 
-    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
-      'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js', [
-          'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul'
-        ]
-      ],
+      'components': {
+
+        'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
+
+        'question_edit': [ 'ccm.component', '../question_edit/ccm.question_edit.js' ],
+
+        'answer_edit': [ 'ccm.component', '../answer_edit/ccm.answer_edit.js' ],
+
+        'answer_ranking': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ],
+
+        'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ]
+      },
+
+      "user_realm": "guest", "user": null,
 
       "data": { "store": [ "ccm.store" ] },
 
-      'qa_views': {
-        'question_edit': {
-          'name': 'Edit Questions',
-          'component': [ 'ccm.component', '../../components/question_edit/ccm.question_edit.js' ]
-        },
-        'answer_edit': {
-          'name': 'Edit Answers',
-          'component': [ 'ccm.component', '../../components/answer_edit/ccm.answer_edit.js' ]
-        },
-        'answer_ranking': {
-          'name': 'Rank Answers',
-          'component': [ 'ccm.component', '../../components/answer_ranking/ccm.answer_ranking.js' ]
-        },
-        'answer_scores': {
-          'name': 'Ranking Scores',
-          'component': [ 'ccm.component', '../../components/answer_scores/ccm.answer_scores.js' ]
-        }
-      },  // end 'qa_views'
+      'qa_view_names': {
+        'question_edit': 'Edit Questions',
+        'answer_edit': 'Edit Answers',
+        'answer_ranking': 'Rank Answers',
+        'answer_scores': 'Ranking Scores'
+      },  // end 'qa_view_names'
 
       'user_views': {
         'grader': [ 'question_edit', 'answer_edit', 'answer_ranking', 'answer_scores' ],
         'student': [ 'answer_edit', 'answer_ranking', 'answer_scores' ]
       },
-
-      'css': [ 'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css'},
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
 
       "html": {
         'main': {
@@ -75,9 +67,23 @@
         'view_panel': { 'role': 'tabpanel', 'id': '%view-panel-id%', 'aria-labelledby': '%menu-tab-id%' },
 
         // message to display when user is not logged in
-        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' },
+
+        // error message
+        'error_message': { 'class': 'alert alert-danger', 'role': 'alert', 'inner': '%message%\n' }
 
       },  // end 'html'
+
+      'css': {
+        'bootstrap': '../../lib/css/bootstrap.min.css',
+        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+      },
+
+      'js': {
+        "crypto": "../../lib/js/crypto-js.min.js",
+        'sortable': '../../lib/js/Sortable.min.js',
+        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
+      }
 
     },  // end config
 
@@ -97,41 +103,67 @@
         const self = this;
         const isViewActive = {};
 
-        // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main ) );
-        const contentElem = self.element.querySelector( '#qa-content' );
+        // create a div element for rendering content and allow for CSS loading
+        const mainDivElem = document.createElement( 'div' );
+        $.setContent( self.element, mainDivElem );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
 
         // login
-        self.user && await self.user.login().then( () => {
-          const username = self.user.data().user;
-          if ( !username ) {
-            $.setContent( self.element, $.html( self.html.login_message ) );
-            return;
-          }
+        let username;
+        self.user = await self.components.user.start( {
+          "css": [ "ccm.load",
+            { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: 'head' },
+            { url: self.css.fontawesome, type: 'css' }, { url: self.css.fontawesome, type: 'css', context: 'head' }
+          ],
+          "title": "Guest Mode: please enter any username", "realm": self.user_realm
+        } );
+        await self.user.login().then ( () => {
+          username = self.user.data().user;
+        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-          // user role
-          self.data.store.get( 'role' ).then( roleInfo => {
+        if ( !username ) {
+          $.setContent( mainDivElem, $.html( self.html.login_message ) );
+          return;
+        }
+
+        // render main HTML structure
+        $.setContent( mainDivElem, $.html( self.html.main ) );
+        const contentElem = mainDivElem.querySelector( '#qa-content' );
+
+        // user role
+        self.data.store.get( 'role' ).then(
+          roleInfo => {
             let roleView;
             if ( roleInfo.name === 'admin' || roleInfo.name === 'grader' ) {
-                roleView = 'grader';
+              roleView = 'grader';
             } else if ( roleInfo.name === 'student' ) {
-                roleView = 'student';
+              roleView = 'student';
             } else {
-                self.element.innerHTML = 'role "' + roleView + '" is unrecognized';
-                return;
+              $.setContent( mainDivElem, $.html( self.html.error_message,
+                                                 { 'message': "role '" + roleView + "' is unrecognized" } ) );
+              return;
             }
 
             renderQA( roleView );
-          } );  // end getting user role
-        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );  // end login()
+          },
+          rejectReason => {
+            console.log( rejectReason.error );
+            $.setContent( mainDivElem, $.html( self.html.error_message,
+                                               { 'message': 'Reading role from server failed' } ) );
+          }
+        );  // end getting user role
 
         function renderQA( roleView ) {
           // render tabs and contents based on user role
-          const tabUlElem = self.element.querySelector( '#qa-tabs-ul' );
+          const tabUlElem = mainDivElem.querySelector( '#qa-tabs-ul' );
           const userViews = self.user_views[ roleView ];
           userViews.forEach( ( viewKey, index ) => {
-            const viewName = self.qa_views[ viewKey ].name;
-            const viewComp = self.qa_views[ viewKey ].component;
+            const viewName = self.qa_view_names[ viewKey ];
+            const viewComp = self.components[ viewKey ];
             const isActive = ( index === 0 ) ? true : false;
             isViewActive[ viewKey ] = isActive;
 
@@ -197,7 +229,7 @@
           setViewPanelActive( divElem, isActive );
 
           // load CCM component in the panel
-          viewComp.start( { root: divElem, data: self.data } );
+          viewComp.start( { root: divElem, data: self.data, 'js': self.js, 'css': self.css } );
           return divElem;
         }  // end getMenuPanel()
 

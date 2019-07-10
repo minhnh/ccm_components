@@ -126,7 +126,7 @@
         // message to display when user is not logged in
         'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' },
 
-        // message to display when user is not logged in
+        // error message
         'error_message': { 'class': 'alert alert-danger', 'role': 'alert', 'inner': '%message%\n' }
 
       },  // end html
