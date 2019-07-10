@@ -10,13 +10,14 @@
 
     name: 'question_edit',
 
-    ccm: 'https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
-      'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
-        [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
-      ],
+      'components': {
+        'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
+      },
+
+      "user_realm": "guest", "user": null,
 
       "data": { "store": [ "ccm.store" ] },
 
@@ -123,19 +124,19 @@
         'alert_message': { 'tag': 'span', 'class': 'alert alert-light text-%message-type%', 'inner': '%message-text%' },
 
         // message to display when user is not logged in
-        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' },
+
+        // message to display when user is not logged in
+        'error_message': { 'class': 'alert alert-danger', 'role': 'alert', 'inner': '%message%\n' }
 
       },  // end html
 
-      'css': [ 'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css'},
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
+      'css': {
+        'bootstrap': '../../lib/css/bootstrap.min.css',
+        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+      },
 
-      'js': [
-        // crypto-js module for hashing question data
-        'ccm.load', { url: "../../lib/js/crypto-js.min.js", type: 'js', context: 'head' }
-      ]
+      'js': { "crypto": "../../lib/js/crypto-js.min.js" }  // crypto-js module for hashing question data
     },
 
     Instance: function () {
@@ -157,14 +158,33 @@
         let ansDeadline;
         let rankDeadline;
 
+        // create a div element for rendering content and allow for CSS loading
+        const mainDivElem = document.createElement( 'div' );
+        $.setContent( self.element, mainDivElem );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
+
+        // load Crypto-JS module
+        await self.ccm.load( { url: self.js.crypto, type: 'js' } );
+
         // login
         let username;
-        self.user && await self.user.login().then ( () => {
+        self.user = await self.components.user.start( {
+          "css": [ "ccm.load",
+            { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: 'head' },
+            { url: self.css.fontawesome, type: 'css' }, { url: self.css.fontawesome, type: 'css', context: 'head' }
+          ],
+          "title": "Guest Mode: please enter any username", "realm": self.user_realm
+        } );
+        await self.user.login().then ( () => {
           username = self.user.data().user;
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
-          $.setContent( self.element, $.html( self.html.login_message ) );
+          $.setContent( mainDivElem, $.html( self.html.login_message ) );
           return;
         }
 
@@ -172,7 +192,7 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main, {
+        $.setContent( mainDivElem, $.html( self.html.main, {
 
           // handle adding new questions
           'add-question-click': async () => {
@@ -209,7 +229,7 @@
             if ( rankDlObj < ansDlObj ) {
               // warn that stored date was invalid and change the ranking deadline to one day after the deadline
               // for answering questions
-              const invalidDateElem = self.element.querySelector( '#invalid-date-notification' );
+              const invalidDateElem = mainDivElem.querySelector( '#invalid-date-notification' );
               setAlertWithTimeout( invalidDateElem, 'please choose ranking deadline after answer deadline',
                                    'warning', 2000 );
               return;
@@ -220,7 +240,7 @@
               'key': self.constants.key_questions, 'entries': questionData,
               'answer_deadline': ansDeadline, 'ranking_deadline': rankDeadline
             } ) .then ( () => {       // successful update
-                const notificationSpan = self.element.querySelector( '#save-notification' );
+                const notificationSpan = mainDivElem.querySelector( '#save-notification' );
                 setAlertWithTimeout( notificationSpan, 'Saved!', 'success' );
               },
               reason => {   // write failed
@@ -240,9 +260,9 @@
             } else {  // fill with current date & time
               ansDeadline = getNextDay( new Date() );
             }
-            const ansDateInput = self.element.querySelector( '#ans-dl-date' );
+            const ansDateInput = mainDivElem.querySelector( '#ans-dl-date' );
             ansDateInput.setAttribute( 'value', ansDeadline.date );
-            const ansTimeInput = self.element.querySelector( '#ans-dl-time' );
+            const ansTimeInput = mainDivElem.querySelector( '#ans-dl-time' );
             ansTimeInput.setAttribute( 'value', ansDeadline.time );
 
             // set deadline for ranking answers
@@ -252,21 +272,23 @@
               const ansDlObj = new Date( ansDeadline.date + ' ' + ansDeadline.time );
               rankDeadline = getNextDay( ansDlObj );
             }
-            const rankDateInput = self.element.querySelector( '#rank-dl-date' );
+            const rankDateInput = mainDivElem.querySelector( '#rank-dl-date' );
             rankDateInput.setAttribute( 'value', rankDeadline.date );
-            const rankTimeInput = self.element.querySelector( '#rank-dl-time' );
+            const rankTimeInput = mainDivElem.querySelector( '#rank-dl-time' );
             rankTimeInput.setAttribute( 'value', rankDeadline.time );
 
             // render questions
             renderQuestions();
           },
           reason => {   // read questions failed
-            console.log( reason );
+            console.log( reason.error );
+            $.setContent( mainDivElem,
+                          $.html( self.html.error_message, { 'message': 'Reading questions from server failed' } ) );
           }
         ).catch( err => console.log( err ) );    // unhandled exception
 
         function renderQuestions() {
-          const questionsElem = self.element.querySelector( '#questions' );
+          const questionsElem = mainDivElem.querySelector( '#questions' );
           questionsElem.innerHTML = '';
           Object.keys( questionData ).forEach( questionId => {
             const question = questionData[ questionId ];

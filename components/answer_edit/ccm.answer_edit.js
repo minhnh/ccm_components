@@ -14,19 +14,19 @@
 
     config: {
       'components': {
-        'user': [
-          'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js'
-        ],
+        'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
 
-        'countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ]
+        'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
+
+      "user_realm": "guest", "user": null,
 
       "data": { "store": [ "ccm.store" ] },
 
       // predefined values
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
-        "qa_prefix": "q_",             // will be prepended to question-answer pair indices to create element ID's
+        "qa_prefix": "q_",              // will be prepended to question-answer pair indices to create element ID's
         "truncate_length": 16           // number of characters to keep as ID for hashed answers
       },
 
@@ -99,18 +99,12 @@
         'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
       },
 
-      'css': [ 'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' },
-        { url: '../../lib/css/fontawesome-all.min.css', type: 'css' },
-        { url: '../../lib/css/fontawesome-all.min.css', type: 'css', context: 'head' }
-      ],
+      'css': {
+        'bootstrap': '../../lib/css/bootstrap.min.css',
+        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+      },
 
-      'js': [
-        'ccm.load', {
-          url: "../../lib/js/crypto-js.min.js", type: 'js', context: 'head'
-        }
-      ]
+      'js': { "crypto": "../../lib/js/crypto-js.min.js" }
     },
 
     Instance: function () {
@@ -132,18 +126,33 @@
         const qaData = {};
         let deadline;
 
+        // create a div element for rendering content and allow for CSS loading
+        const mainDivElem = document.createElement( 'div' );
+        $.setContent( self.element, mainDivElem );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
+
+        // load Crypto-JS module
+        await self.ccm.load( { url: self.js.crypto, type: 'js' } );
+
         // login
         let username;
-        const userComp = await self.components.user.start( {
-          "root": self.element, "css": [ "ccm.load", self.css ],
-          "realm": "guest", "title": "Guest Mode: please enter any username"
+        self.user = await self.components.user.start( {
+          "css": [ "ccm.load",
+            { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: 'head' },
+            { url: self.css.fontawesome, type: 'css' }, { url: self.css.fontawesome, type: 'css', context: 'head' }
+          ],
+          "title": "Guest Mode: please enter any username", "realm": self.user_realm
         } );
-        await userComp.login().then ( () => {
-          username = userComp.data().user;
+        await self.user.login().then ( () => {
+          username = self.user.data().user;
         } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
         if ( !username ) {
-          $.setContent( self.element, $.html( self.html.login_message ) );
+          $.setContent( mainDivElem, $.html( self.html.login_message ) );
           return;
         }
 
@@ -151,7 +160,7 @@
         self.logger && self.logger.log( 'start' );
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main, {
+        $.setContent( mainDivElem, $.html( self.html.main, {
           // save ranking event handler
           'save-click': async ( event ) => {
             let payload = { key : username, answers: {}, ranking: {} };
@@ -166,7 +175,7 @@
             });
 
             await self.data.store.set( payload ).then( () => {
-              const notificationSpan = self.element.querySelector( '#save-notification' );
+              const notificationSpan = mainDivElem.querySelector( '#save-notification' );
               notificationSpan.innerText = 'Success';
               setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
             } );
@@ -174,7 +183,7 @@
         } ) );
 
         // get page fragments
-        const contentElem = self.element.querySelector( '#content' );
+        const contentElem = mainDivElem.querySelector( '#content' );
 
         // load questions from store
         await self.data.store.get( self.constants.key_questions ).then(
@@ -206,11 +215,11 @@
             reason => console.log( reason )             // read from data store failed
         ).catch( err => console.log( err.message ) );   // unhandled exception
 
-        const dlCountdownElem = self.element.querySelector( '#deadline-timer' );
+        const dlCountdownElem = mainDivElem.querySelector( '#deadline-timer' );
         await self.components.countdown.start( {
-          root: dlCountdownElem, 'deadline': deadline, 'css': [ "ccm.load", self.css ],
+          root: dlCountdownElem, 'deadline': deadline, 'css': self.css,
           'onfinish': () => {
-            const saveElem = self.element.querySelector( '#save' );
+            const saveElem = mainDivElem.querySelector( '#save' );
             saveElem.innerHTML = '';
           }
         } );

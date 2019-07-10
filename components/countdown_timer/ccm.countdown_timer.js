@@ -30,10 +30,7 @@
       // start blinking if the time offset is less than this amount (ms), default to 1 minute
       'warn_time': 60000,
 
-      'css': [ 'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css'},
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
+      'css': { 'bootstrap': '../../lib/css/bootstrap.min.css' },
     },
 
     Instance: function () {
@@ -50,6 +47,13 @@
 
         // render main HTML structure
         $.setContent( self.element, $.html( self.html.main ) );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' },
+          { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
+
         const mainElem = self.element.querySelector( '#main' );
 
         let deadline;
