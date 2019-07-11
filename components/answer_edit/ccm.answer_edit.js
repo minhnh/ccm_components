@@ -96,7 +96,10 @@
         },  // end qa_entry
 
         // message to display when user is not logged in
-        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' },
+
+        // error message
+        'error_message': { 'class': 'alert alert-danger', 'role': 'alert', 'inner': '%message%\n' }
       },
 
       'css': {
@@ -123,8 +126,6 @@
 
         // get dataset for rendering
         const self = this;
-        const qaData = {};
-        let deadline;
 
         // create a div element for rendering content and allow for CSS loading
         const mainDivElem = document.createElement( 'div' );
@@ -147,86 +148,88 @@
           ],
           "title": "Guest Mode: please enter any username", "realm": self.user_realm
         } );
-        await self.user.login().then ( () => {
-          username = self.user.data().user;
-        } ).catch( ( exception ) => console.log( 'login: ' + exception.error ) );
 
-        if ( !username ) {
-          $.setContent( mainDivElem, $.html( self.html.login_message ) );
-          return;
-        }
+        await self.user.login()
+        .then ( () => {
+          const username = self.user.data().user;
 
-        // has logger instance? => log 'start' event
-        self.logger && self.logger.log( 'start' );
-
-        // render main HTML structure
-        $.setContent( mainDivElem, $.html( self.html.main, {
-          // save ranking event handler
-          'save-click': async ( event ) => {
-            let payload = { key : username, answers: {}, ranking: {} };
-
-            Object.keys( qaData ).forEach( ( key ) => {
-              const questionIdHtml = self.constants.qa_prefix + key;
-              let aId = "textarea#" + questionIdHtml + "_answer";
-              const ansText = contentElem.querySelector( aId ).value;
-              const hashObj = CryptoJS.SHA256( ansText.trim() );
-              const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
-              payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
-            });
-
-            await self.data.store.set( payload ).then( () => {
-              const notificationSpan = mainDivElem.querySelector( '#save-notification' );
-              notificationSpan.innerText = 'Success';
-              setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
+          // load questions and user data from store
+          Promise.all( [
+            self.data.store.get( self.constants.key_questions ),
+            self.data.store.get( username )
+          ] )
+          .then( ( [ questionData, userData ] ) => {
+            const qaData = {};
+            const deadline = questionData.answer_deadline;
+            questionData && questionData.entries && Object.keys( questionData.entries ).forEach( questionId => {
+              qaData[ questionId ] = {};
+              qaData[ questionId ][ 'question' ] = questionData.entries[ questionId ];
             } );
-          }  // end event handler
-        } ) );
 
-        // get page fragments
-        const contentElem = mainDivElem.querySelector( '#content' );
+            // create new user data document if not exist
+            if ( !userData ) userData = { "answers": {}, "ranking": {} };
+            userData.answers && Object.keys( userData.answers ).forEach( questionId => {
+              // if no question on record for this answer, skip entry
+              if ( !qaData[ questionId ] ) return;
 
-        // load questions from store
-        await self.data.store.get( self.constants.key_questions ).then(
-            questions => {
-              deadline = questions.answer_deadline;
-              questions && questions.entries && Object.keys( questions.entries ).forEach( questionId => {
-                qaData[ questionId ] = {};
-                qaData[ questionId ][ 'question' ] = questions.entries[ questionId ];
-              } );
-            },
-            reason => console.log( reason )             // read from data store failed
-        ).catch( err => console.log( err.message ) );   // unhandled exception
+              qaData[ questionId ][ 'answer' ] = userData.answers[ questionId ][ 'text' ];
+            } );
 
-        // load answers from store
-        await self.data.store.get( username ).then(
-            ud => {
-              if ( !ud ) {
-                // create new user data document if not exist
-                ud = { "answers": {}, "ranking": {} }
-              }
+            renderContent( mainDivElem, qaData );
+            renderDeadlineTimer( mainDivElem, deadline );
+            renderQAPairs( mainDivElem, qaData );
 
-              ud.answers && Object.keys( ud.answers ).forEach( questionId => {
-                // if no question on record for this answer, skip entry
-                if ( !qaData[ questionId ] ) return;
-
-                qaData[ questionId ][ 'answer' ] = ud.answers[ questionId ][ 'text' ];
-              } );
-            },
-            reason => console.log( reason )             // read from data store failed
-        ).catch( err => console.log( err.message ) );   // unhandled exception
-
-        const dlCountdownElem = mainDivElem.querySelector( '#deadline-timer' );
-        await self.components.countdown.start( {
-          root: dlCountdownElem, 'deadline': deadline, 'css': self.css,
-          'onfinish': () => {
-            const saveElem = mainDivElem.querySelector( '#save' );
-            saveElem.innerHTML = '';
-          }
+          } )
+          .catch( exception => {
+            console.log( exception );
+            $.setContent( mainDivElem, $.html( self.html.error_message,
+                                               { 'message': 'Failed to read/write data store.' } ) );
+          } );
+        } )
+        .catch( exception => {
+          console.log( exception );
+          $.setContent( mainDivElem, $.html( self.html.login_message ) );
         } );
 
-        renderQAPairs();
+        function renderContent( rootElem, qaData ) {
+          // render main HTML structure
+          $.setContent( rootElem, $.html( self.html.main, {
+            // save ranking event handler
+            'save-click': async ( event ) => {
+              let payload = { key : username, answers: {}, ranking: {} };
 
-        function renderQAPairs() {
+              Object.keys( qaData ).forEach( ( key ) => {
+                const questionIdHtml = self.constants.qa_prefix + key;
+                let aId = "textarea#" + questionIdHtml + "_answer";
+                const ansText = contentElem.querySelector( aId ).value;
+                const hashObj = CryptoJS.SHA256( ansText.trim() );
+                const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
+                payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
+              });
+
+              await self.data.store.set( payload ).then( () => {
+                const notificationSpan = rootElem.querySelector( '#save-notification' );
+                notificationSpan.innerText = 'Success';
+                setTimeout( () => { notificationSpan.innerText = ''; }, 1000 );  // message disappear after 1 second
+              } );
+            }  // end event handler
+          } ) );
+        }
+
+        function renderDeadlineTimer( rootElem, deadline ) {
+          const dlCountdownElem = rootElem.querySelector( '#deadline-timer' );
+          self.components.countdown.start( {
+            root: dlCountdownElem, 'deadline': deadline, 'css': self.css,
+            'onfinish': () => {
+              const saveElem = mainDivElem.querySelector( '#save' );
+              saveElem.innerHTML = '';
+            }
+          } );
+        }  // end renderDeadlineTimer
+
+        function renderQAPairs( rootElem, qaData ) {
+          const contentElem = rootElem.querySelector( '#content' );
+
           Object.keys( qaData ).forEach( ( questionId ) => {
             const answerText = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
             const questionText = qaData[ questionId ].question ? qaData[ questionId ].question : '';
