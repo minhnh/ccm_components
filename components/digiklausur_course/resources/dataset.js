@@ -22,7 +22,8 @@ ccm.files[ "dataset.js" ] = {
           {
             "title": "Questions and Answers",
             "content": [ "ccm.instance", "../../components/question_answer/ccm.question_answer.js" ],
-            "collection_id": "sample"
+            "collection_id": "sample",
+            "entry_type": "qa"
           }
         ]
       },
@@ -33,7 +34,8 @@ ccm.files[ "dataset.js" ] = {
           {
             "title": "Questions and Answers",
             "content": [ "ccm.instance", "../../components/question_answer/ccm.question_answer.js" ],
-            "collection_id": "sample_2"
+            "collection_id": "sample_2",
+            "entry_type": "qa"
           }
         ]
       }

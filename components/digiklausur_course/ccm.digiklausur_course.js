@@ -135,6 +135,16 @@
           ]
         },  // end navigation HTML definition
 
+        // HTML configuration for each menu entry
+        'entry': {
+          'inner': [
+            // fontawesome icon
+            { 'tag': 'span', 'inner': [ { 'tag': 'i', 'class': 'fa %icon% text-info' } ] },
+            // button link that load entry content
+            { 'tag': 'button', 'class': 'btn btn-link', 'type': 'button', 'inner': '%title%', 'onclick': '%click%' }
+          ]
+        },
+
         'login_button': {
           'tag': 'li', 'class': 'nav-item',
           'inner': {
@@ -144,7 +154,7 @@
         },
 
         'user_info': {
-          'tag': 'li', 'class': 'nav-item text-white', 'inner': [
+          'tag': 'li', 'class': 'nav-item text-white pt-1', 'inner': [
             { 'tag': 'i', 'class': 'fa fa-user pr-1' },
             { 'tag': 'span', 'id': 'username', 'inner': '%username%', 'class': 'p-1' },
             { 'tag': 'span', 'id': 'user-role', 'inner': '(%role%)', 'class': 'pr-2' }
@@ -154,7 +164,12 @@
         // message to display when user is not logged in
         'alert_message': { 'class': 'alert alert-%type%', 'role': 'alert', 'inner': '%message%\n' }
 
-      }  // end HTML configurations
+      },  // end HTML configurations
+
+      // icon class name for each entry type
+      'entry_icons': {
+        'qa': 'fa-question-circle'
+      }
     },
 
     Instance: function () {
@@ -174,6 +189,8 @@
 
       this.start = async () => {
         let courseInfoStore;
+        let storeUrl;
+        let courseId;
 
         // load HTML configuration and query for main elements
         const main = $.html( self.html.main );
@@ -200,14 +217,17 @@
           self.dataset.get( 'course_name' ),
           self.dataset.get( 'course_id' ),
           self.dataset.get( 'store_url' ) ] )
-        .then( async ( [ courseName, courseId, storeUrl ] ) => {
-          document.title = courseName;
+        .then( async ( [ pCourseName, pCourseId, pStoreUrl ] ) => {
+          document.title = pCourseName;
+          courseId = pCourseId;
+          storeUrl = pStoreUrl;
+
           await self.ccm.store( {
             'name': courseId + '_course_info', 'url': storeUrl, 'parent': self, 'method': 'POST'
           } )
           .then( infoStore => { courseInfoStore = infoStore; } );
 
-          setupNavigation( courseName );
+          setupNavigation( pCourseName );
           renderArticle( 'home' );
         } )
         .catch( exception => {
@@ -281,7 +301,7 @@
 
           rootElem.appendChild( userInfoElem );
           rootElem.appendChild( signOutBtn );
-        }
+        }  // end renderLoggedInNav()
 
         function renderLoggedOutNav( rootElem ) {
           // clean element content
@@ -306,14 +326,13 @@
           } );
 
           rootElem.appendChild( signInBtn );
-        }
+        }  // end renderLoggedOutNav()
 
         function renderArticle( pageName ) {
 
           if ( !self.user || !self.user.isLoggedIn() ) {
             $.setContent( article,
-              $.html( self.html.alert_message, { 'type': 'info', 'message': 'Please login to continue!' } )
-              );
+              $.html( self.html.alert_message, { 'type': 'info', 'message': 'Please login to continue!' } ) );
             return;
           }
 
@@ -323,61 +342,58 @@
               renderHome();
               break;
           }
+        }  // end renderArticle()
 
-          function renderHome() {
-            self.dataset.get( 'home_menu' ).then(
-                result => {
-                  let accordionConfigs = {
-                    root: article, color: "info", size: "lg", entries: [],
-                    // load bootstrap with content
-                    content: self.comp_content
-                  };
-                  result.sections.forEach( section => {
-                    const store = section.store;
-                    const menuEntries = document.createDocumentFragment();
-                    section.entries.forEach(
-                        entry => menuEntries.appendChild( renderMenuEntry( entry.title, entry.content, store ) )
-                    );
-                    accordionConfigs.entries.push( { 'title': section.title, 'content': menuEntries } )
-                  });
-                  self.comp_accordion.start( accordionConfigs );
+        function renderHome() {
+          self.dataset.get( 'home_menu' ).then(
+              result => {
+                let accordionConfigs = {
+                  root: article, color: "info", size: "lg", entries: [],
+                  // load bootstrap with content
+                  content: self.comp_content
+                };
+                result.sections.forEach( section => {
+                  const menuEntries = document.createDocumentFragment();
+                  section.entries.forEach( entryConfig => menuEntries.appendChild( renderMenuEntry( entryConfig ) ) );
+                  accordionConfigs.entries.push( { 'title': section.title, 'content': menuEntries } )
                 });
-
-            function renderMenuEntry( title, content, store ) {
-              const divElem = document.createElement( 'div' );
-              const questionIconSpan = document.createElement( 'span' );
-              questionIconSpan.innerHTML = '<i class="fa fa-question-circle text-info"></i>';
-
-              const entryLink = document.createElement( 'button' );
-              entryLink.className = 'btn btn-link';
-              entryLink.setAttribute( 'type', 'button' );
-              entryLink.innerText = title;
-              entryLink.addEventListener( 'click', async( event ) => {
-                // use the common store defined for each section
-                content.push( { "data": { "store": store } } );
-
-                // content is given as ccm dependency? => solve dependency
-                content = await $.solveDependency( content );
-                // content is ccm instance? => render instance as content
-                if ( $.isInstance( content ) ) {
-                  $.setContent( article, content.root );
-                  await content.start();
-                }
-                // render given content
-                else $.setContent( article, $.html( content ) );
+                self.comp_accordion.start( accordionConfigs );
               });
+        }  // end renderHome()
 
-              divElem.appendChild( questionIconSpan );
-              divElem.appendChild( entryLink );
-              return divElem;
+        function renderMenuEntry( entryConfig ) {
+          let content = $.clone( entryConfig.content );
+          return $.html( self.html.entry, {
+            'icon': self.entry_icons[ entryConfig.entry_type ],
+            'title': entryConfig.title,
+            'click': async () => {
+              // add configurations to the CCM instance
+              content.push( {
+                "data": { "store": [ "ccm.store", {
+                  "name": courseId + '_' + entryConfig.collection_id,
+                  "url": storeUrl, "method": "POST"
+                } ] },
+                "user_realm": self.user_realm
+              } );
+
+              // content is given as ccm dependency? => solve dependency
+              content = await $.solveDependency( content );
+              // content is ccm instance? => render instance as content
+              if ( $.isInstance( content ) ) {
+                $.setContent( article, content.root );
+                await content.start();
+              }
+              // render given content as HTML
+              else $.setContent( article, $.html( content ) );
             }
-          }
-        }
-      };
+          } );
+        }  // end renderMenuEntry()
 
-    }
+      };  // end start()
 
-  };
+    }  // end Instance()
+
+  };  // end component()
 
   let b='ccm.'+component.name+(component.version?'-'+component.version.join('.'):'')+'.js';if(window.ccm&&null===window.ccm.files[b])return window.ccm.files[b]=component;(b=window.ccm&&window.ccm.components[component.name])&&b.ccm&&(component.ccm=b.ccm);'string'===typeof component.ccm&&(component.ccm={url:component.ccm});let c=(component.ccm.url.match(/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)||['latest'])[0];if(window.ccm&&window.ccm[c])window.ccm[c].component(component);else{var a=document.createElement('script');document.head.appendChild(a);component.ccm.integrity&&a.setAttribute('integrity',component.ccm.integrity);component.ccm.crossorigin&&a.setAttribute('crossorigin',component.ccm.crossorigin);a.onload=function(){window.ccm[c].component(component);document.head.removeChild(a)};a.src=component.ccm.url}
 } )();
