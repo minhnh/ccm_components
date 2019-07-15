@@ -23,7 +23,11 @@
 
         'answer_ranking': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ],
 
-        'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ]
+        'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ],
+
+        'sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
+
+        'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
 
       "user_realm": "guest", "user": null,
@@ -229,7 +233,9 @@
           setViewPanelActive( divElem, isActive );
 
           // load CCM component in the panel
-          viewComp.start( { root: divElem, data: self.data, 'js': self.js, 'css': self.css } );
+          viewComp.start( {
+            root: divElem, data: self.data, 'js': self.js, 'css': self.css, 'user_realm': self.user_realm
+          } );
           return divElem;
         }  // end getMenuPanel()
 
