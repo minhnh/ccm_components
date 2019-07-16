@@ -10,17 +10,18 @@
 
     name: 'answer_scores',
 
-    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
       'data': { 'store': [ 'ccm.store' ] },
 
-      'user': [
-        'ccm.instance', 'https://ccmjs.github.io/akless-components/user/versions/ccm.user-9.1.1.js',
-        [ 'ccm.get', 'https://ccmjs.github.io/akless-components/user/resources/configs.js', 'hbrsinfkaul' ]
-      ],
+      'components': {
+        'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
 
-      'comp_countdown': [ 'ccm.component', '../../components/countdown_timer/ccm.countdown_timer.js' ],
+        'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
+      },
+
+      "user_realm": "guest", "user": null,
 
       // predefined values
       'constants' : {
@@ -135,12 +136,15 @@
             { 'id': 'deadline-timer', 'class': 'col-sm-0' }
           ]
         },  // end 'deadline_timer'
+
+        // message to display when user is not logged in
+        'login_message': { 'class': 'alert alert-info', 'role': 'alert', 'inner': 'Please login to continue!\n' }
       },
 
-      'css': [ 'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
+      'css': {
+        'bootstrap': '../../lib/css/bootstrap.min.css',
+        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+      },
     },
 
     Instance: function () {
@@ -155,6 +159,36 @@
       this.start = async () => {
         // get dataset for rendering
         const self = this;
+
+        // create a div element for rendering content and allow for CSS loading
+        const mainDivElem = document.createElement( 'div' );
+        $.setContent( self.element, mainDivElem );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
+
+        // login
+        let username;
+        self.user = await self.components.user.start( {
+          "css": [ "ccm.load",
+            { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: 'head' },
+            { url: self.css.fontawesome, type: 'css' }, { url: self.css.fontawesome, type: 'css', context: 'head' }
+          ],
+          "title": "Guest Mode: please enter any username", "realm": self.user_realm
+        } );
+        await self.user.login().then ( () => {
+          username = self.user.data().user;
+        },
+        reason => {  // login failed
+          console.log( reason.message );
+        } ).catch( ( exception ) => console.log( exception ) );
+
+        if ( !username ) {
+          $.setContent( mainDivElem, $.html( self.html.login_message ) );
+          return;
+        }
 
         // keep track of which question is currently selected
         const isQuestionSelected = {};
@@ -174,13 +208,12 @@
         // if rankDeadline is specified, wait until the deadline for ranking answers is finished,
         // otherwise render content
         if ( rankDeadline ) {
-          $.setContent( self.element,  $.html( self.html.deadline_timer, {
+          $.setContent( mainDivElem,  $.html( self.html.deadline_timer, {
             'label': 'Answer scores available in:'
           } ) );
-          const rankDlTimerElem = self.element.querySelector( '#deadline-timer' );
-          await self.comp_countdown.start( {
-            root: rankDlTimerElem,
-            'deadline': rankDeadline,
+          const rankDlTimerElem = mainDivElem.querySelector( '#deadline-timer' );
+          await self.components.countdown.start( {
+            root: rankDlTimerElem, 'css': self.css, 'deadline': rankDeadline,
             'onfinish': async () => { await renderContent(); }
           } );
         } else {
@@ -193,43 +226,38 @@
 
         async function renderContent() {
           // render main HTML structure
-          $.setContent( self.element, $.html( self.html.main ) );
+          $.setContent( mainDivElem, $.html( self.html.main ) );
+
           // get page fragments
-          const contentRowDiv = self.element.querySelector( '#content-row' );
+          const contentRowDiv = mainDivElem.querySelector( '#content-row' );
           const questionTabsDiv = contentRowDiv.querySelector( '#question-tabs' );
           const answerPanelDiv = contentRowDiv.querySelector( '#answer-panel' );
 
-          // login
-          self.user && await self.user.login().then ( async () => {
-            // get user role for rendering content accordingly
-            let showUsername = false;
-            await self.data.store.get( 'role' ).then( roleInfo => {
-              if ( roleInfo.name === 'admin' || roleInfo.name === 'grader' ) showUsername = true;
-            } );
+          // get user role for rendering content accordingly
+          let showUsername = false;
+          await self.data.store.get( 'role' ).then( roleInfo => {
+            if ( roleInfo.name === 'admin' || roleInfo.name === 'grader' ) showUsername = true;
+          } );
 
-            // render questions and their answers, set first question tab and answer panel as active
-            Object.keys( questionEntries ).forEach( ( questionId, index ) => {
-              self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
-                if ( !answers || !answers.entries ) {
-                  return;
-                }
+          // render questions and their answers, set first question tab and answer panel as active
+          Object.keys( questionEntries ).forEach( ( questionId, index ) => {
+            self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
+              if ( !answers || !answers.entries ) {
+                return;
+              }
 
-                const isActive = ( index === 0 ) ? true : false;
-                isQuestionSelected[ questionId ] = isActive;
+              const isActive = ( index === 0 ) ? true : false;
+              isQuestionSelected[ questionId ] = isActive;
 
-                // add question tab and answer panel
-                questionTabsDiv.appendChild( getQuestionTab( questionTabsDiv, answerPanelDiv, questionId,
-                                                             questionEntries[ questionId ], isActive )
-                );
-                answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive, showUsername ) );
-              },
-              reason => console.log( 'get answers rejected: ' + reason )
-              ).catch( err => console.log( 'get answers failed: ' + err ) );
-            } );
-          },
-          reason => {
-            console.log( reason );
-          } ).catch( ( exception ) => console.log( exception ) );
+              // add question tab and answer panel
+              questionTabsDiv.appendChild( getQuestionTab( questionTabsDiv, answerPanelDiv, questionId,
+                                                            questionEntries[ questionId ], isActive )
+              );
+              answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive, showUsername ) );
+            },
+            reason => console.log( 'get answers rejected: ' + reason )
+            ).catch( err => console.log( 'get answers failed: ' + err ) );
+          } );
         }  // end renderContent()
 
         function getQuestionTab( questionTabsElem, ansPanelsElem, questionId, questionText, isActive ) {

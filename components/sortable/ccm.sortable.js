@@ -9,19 +9,15 @@
 
     name: 'sortable',
 
-    ccm: 'https://ccmjs.github.io/ccm/ccm.js',
+    ccm: '../../lib/js/ccm/ccm-21.1.3.min.js',
 
     config: {
-      'css': [
-        'ccm.load',
-        { url: '../../lib/css/bootstrap.min.css', type: 'css' },
-        { url: '../../lib/css/bootstrap.min.css', type: 'css', context: 'head' }
-      ],
+      'css': { 'bootstrap': '../../lib/css/bootstrap.min.css' },
 
-      'js': [ 'ccm.load',
-        { url: '../../lib/js/Sortable.min.js', type: 'js' },
-        { url: '../../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' }
-      ],
+      'js': {
+        'sortable': '../../lib/js/Sortable.min.js',
+        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
+      },
 
       'data': { 'store': [ 'ccm.store' ] },
 
@@ -37,7 +33,6 @@
     Instance: function () {
 
       let $;
-      let dataset;
 
       this.ready = async () => {
         // set shortcut to help functions
@@ -48,17 +43,31 @@
       };
 
       this.start = async () => {
+        const self = this;
+
         // has logger instance? => log 'start' event
-        this.logger && this.logger.log( 'start', $.clone( dataset ) );
+        self.logger && self.logger.log( 'start', $.clone( dataset ) );
 
         // render main HTML structure
-        $.setContent( this.element, $.html( this.html.main ) );
+        $.setContent( self.element, $.html( self.html.main ) );
+
+        // load bootstrap CSS
+        self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' },
+          { url: self.css.bootstrap, type: 'css', context: self.element }
+        );
+
+        // load Javascript modules
+        await self.ccm.load(
+          { url: self.js.sortable, type: 'js' },
+          { url: self.js.jquery, type: 'js' }
+        );
 
         // contain list items
-        const items_elem = this.element.querySelector( '#items' );
+        const items_elem = self.element.querySelector( '#items' );
 
         // get dataset for rendering
-        const self = this; dataset = await $.dataset( this.data );
+        let dataset = await $.dataset( self.data );
 
         // render list items
         const ul_elem = document.createElement( 'ul' );
