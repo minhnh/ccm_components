@@ -35,22 +35,6 @@
 
       'user': null,
 
-      'comp_accordion': [
-          'ccm.component', 'https://ccmjs.github.io/tkless-components/accordion/versions/ccm.accordion-2.0.0.js'
-      ],
-
-      'comp_content': [
-        "ccm.component", "https://ccmjs.github.io/akless-components/content/versions/ccm.content-5.2.1.js", {
-          config: {
-            'css': [
-              'ccm.load',
-              { url: '../../lib/css/bootstrap.min.css', type: 'css' },
-              { url: '../../lib/css/fontawesome-all.min.css', type: 'css' }
-            ],
-          }
-        }
-      ],
-
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
       'css': {
@@ -68,22 +52,36 @@
         'main': {
           'inner': [
             { 'id': 'header' },
-            { 'id': 'article' },
+            { 'id': 'article', 'class': 'p-2' },
             { 'id': 'feedback' },
             { 'id': 'footer' }
           ]
         },
 
-        'content': {
+        // HTML configuration for accordion-style section menu
+        'section': {
+          'class': 'card', 'id': 's-%section_id%',
           'inner': [
-            { 'id': 'section' },
-            { 'id': 'menu-list' }
+            {
+              'id': 's-%section_id%-header', 'class': 'card-header bg-info',
+              // button link containing the section title
+              'inner': [ {
+                'tag': 'button', 'class': 'btn btn-link text-white collapsed', 'data-toggle': 'collapse', 'aria-expanded': 'true',
+                'data-target': '#s-%section_id%-body', 'aria-controls': 's-%section_id%-body',
+                'inner': '<h5 class=\"mb-0\">%section-title%</h5>', 'id': 's-%section_id%-button'
+              } ]
+            },
+            {
+              'id': 's-%section_id%-body', 'class': 'collapse',
+              'aria-labelledby': 's-%section_id%-header',
+              'inner': [ { 'id': 's-%section_id%-body-content', 'class': 'card-body' } ]
+            }
           ]
         },
 
         'navigation': {
           'tag': 'nav',
-          'class': 'navbar navbar-expand-md navbar-dark bg-info',
+          'class': 'navbar navbar-expand-md navbar-dark bg-info pb-2',
           'id': 'navigation-bar',
           'inner': [
             // navbar brand
@@ -345,20 +343,32 @@
         }  // end renderArticle()
 
         function renderHome() {
+          // clear the 'article' element
+          while ( article.firstChild ) { article.removeChild( article.firstChild ); }
+
           self.dataset.get( 'home_menu' ).then(
-              result => {
-                let accordionConfigs = {
-                  root: article, color: "info", size: "lg", entries: [],
-                  // load bootstrap with content
-                  content: self.comp_content
-                };
-                result.sections.forEach( section => {
-                  const menuEntries = document.createDocumentFragment();
-                  section.entries.forEach( entryConfig => menuEntries.appendChild( renderMenuEntry( entryConfig ) ) );
-                  accordionConfigs.entries.push( { 'title': section.title, 'content': menuEntries } )
-                });
-                self.comp_accordion.start( accordionConfigs );
+            result => {
+              result.sections.forEach( section => {
+                const sectionElem = $.html( self.html.section, {
+                  'section_id': section.id, 'section-title': section.title
+                } );
+                const sectionContent = sectionElem.querySelector( '#s-' + section.id + '-body-content' );
+                const sectionBtn = sectionElem.querySelector( '#s-' + section.id + '-header' );
+
+                // toggle visibility of the section and its content
+                sectionBtn.addEventListener( 'click', async event => {
+                  event.srcElement.classList.toggle( 'collapsed' );
+                  sectionContent.parentElement.classList.toggle( 'show' );
+                } );
+
+                // render menu entries for the section
+                section.entries.forEach( entryConfig => {
+                  sectionContent.appendChild( renderMenuEntry( entryConfig ) )
+                } );
+
+                article.appendChild( sectionElem );
               });
+            });
         }  // end renderHome()
 
         function renderMenuEntry( entryConfig ) {

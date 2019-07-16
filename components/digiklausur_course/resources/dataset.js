@@ -16,7 +16,7 @@ ccm.files[ "dataset.js" ] = {
     "key": "home_menu",
     "sections": [
       {
-        "title": "Lecture 1",
+        "title": "Lecture 1", "id": "lecture-1",
 
         "entries": [
           {
@@ -29,7 +29,7 @@ ccm.files[ "dataset.js" ] = {
         ]
       },
       {
-        "title": "Lecture 2",
+        "title": "Lecture 2", "id": "lecture-2",
 
         "entries": [
           {
