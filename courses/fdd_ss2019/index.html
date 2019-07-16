@@ -13,15 +13,24 @@
 <body>
 <script src="https://ccmjs.github.io/ccm/versions/ccm-20.7.1.js"></script>
 <script>
-    ccm.load(
-        {
-            url: "../../components/digiklausur_course/ccm.digiklausur_course.js", type: "js", context: "head"
-        }
-    );
+    const compPath = '../../components/';
+    ccm.load( {
+        url: compPath + "digiklausur_course/ccm.digiklausur_course.js", type: "js", context: "head"
+    } );
 
     // start app
     (async () => {
-        const instance = await ccm.start( '../../components/digiklausur_course/ccm.digiklausur_course.js' );
+        const instance = await ccm.start( compPath + 'digiklausur_course/ccm.digiklausur_course.js', {
+            'components': {
+                'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
+                'question_edit': [ 'ccm.component', compPath + 'question_edit/ccm.question_edit.js' ],
+                'answer_edit': [ 'ccm.component', compPath + 'answer_edit/ccm.answer_edit.js' ],
+                'answer_ranking': [ 'ccm.component', compPath + 'answer_ranking/ccm.answer_ranking.js' ],
+                'answer_scores': [ 'ccm.component', compPath + 'answer_scores/ccm.answer_scores.js' ],
+                'sortable': [ 'ccm.component', compPath + 'sortable/ccm.sortable.js' ],
+                'countdown': [ 'ccm.component', compPath + 'countdown_timer/ccm.countdown_timer.js' ]
+            }
+        } );
         ccm.helper.setContent( document.body, instance.root );
     })();
 </script>
