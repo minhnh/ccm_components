@@ -175,7 +175,7 @@
               qaData[ questionId ][ 'answer' ] = userData.answers[ questionId ][ 'text' ];
             } );
 
-            renderContent( mainDivElem, qaData );
+            renderContent( mainDivElem, qaData, username );
             renderDeadlineTimer( mainDivElem, deadline );
             renderQAPairs( mainDivElem, qaData );
 
@@ -191,7 +191,7 @@
           $.setContent( mainDivElem, $.html( self.html.login_message ) );
         } );
 
-        function renderContent( rootElem, qaData ) {
+        function renderContent( rootElem, qaData, username ) {
           // render main HTML structure
           $.setContent( rootElem, $.html( self.html.main, {
             // save ranking event handler
@@ -201,7 +201,7 @@
               Object.keys( qaData ).forEach( ( key ) => {
                 const questionIdHtml = self.constants.qa_prefix + key;
                 let aId = "textarea#" + questionIdHtml + "_answer";
-                const ansText = contentElem.querySelector( aId ).value;
+                const ansText = rootElem.querySelector( aId ).value;
                 const hashObj = CryptoJS.SHA256( ansText.trim() );
                 const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
                 payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
