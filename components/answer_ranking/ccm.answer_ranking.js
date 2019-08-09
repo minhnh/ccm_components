@@ -271,7 +271,8 @@
           }
 
           // sort answers by rank count
-          const ansByRankCount = sortAnswersByRankCount( questionId, selectedAnswers, userData, allAnswers );
+          const ansByRankCount = sortAnswersByRankCount( questionId, selectedAnswers, userData,
+                                                         allAnswers, indicesAvailable );
 
           // Fill 'answers' randomly, starting from ones with the least number of ranking
           Object.keys( ansByRankCount ).sort().forEach( rankCount => {
@@ -301,7 +302,7 @@
           return selectedAnswers;
         }  // end getAnswers()
 
-        function sortAnswersByRankCount( questionId, selectedAnswers, userData, allAnswers ) {
+        function sortAnswersByRankCount( questionId, selectedAnswers, userData, allAnswers, indicesAvailable ) {
           const ansByRankCount = {};
           for ( ansKey in allAnswers ) {
             // if there are enough entries in 'answers', stop the loop
@@ -315,11 +316,11 @@
             if ( ansKey in selectedAnswers ) continue;
 
             // add to 'answers' if this answers is already ranked by the current user, unlikely to be here
-            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] && Object.keys( indiceAvailable ).length !==0 ) {
+            if ( username in allAnswers[ ansKey ][ 'ranked_by' ] && Object.keys( indicesAvailable ).length !==0 ) {
               // pop the first available rank index to store in 'answers'
-              const rankIndex = Object.keys( indiceAvailable )[ 0 ];
+              const rankIndex = Object.keys( indicesAvailable )[ 0 ];
               selectedAnswers[ ansKey ] = rankIndex;
-              delete indiceAvailable[ rankIndex ]
+              delete indicesAvailable[ rankIndex ]
               continue;
             }
 
@@ -371,8 +372,6 @@
 
           return qaRankingEntry;
         }  // end renderAnswerRanking()
-
-        function getDateObj( dateDict ) { return new Date( dateDict.date + ' ' + dateDict.time ) };
 
       };  // end start()
     }  // end Instance()
