@@ -8,7 +8,7 @@ ccm.files[ 'configs.js' ] = {
         "key": "digiklausur",
         "data": {
             "store": [ "ccm.store", {
-                "name": "question_answers_sample",
+                "name": "question_answers_sample#demo",
                 "url": "https://digiklausur.ddns.net", "method": "POST"
             } ]
         },
@@ -19,7 +19,7 @@ ccm.files[ 'configs.js' ] = {
         "key": "localhost",
         "data": {
             "store": [ "ccm.store", {
-                "name": "question_answers_sample",
+                "name": "question_answers_sample#demo",
                 "url": "http://localhost:3000", "method": "POST"
             } ]
         },
