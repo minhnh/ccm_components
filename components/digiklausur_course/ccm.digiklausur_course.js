@@ -31,9 +31,7 @@
         'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
 
-      "user_realm": "hbrsinfkaul",
-
-      'user': null,
+      "user_realm": "hbrsinfkaul", 'user': null,
 
       'dataset': [ 'ccm.store', 'resources/dataset.js' ],
 
@@ -221,12 +219,20 @@
           storeUrl = pStoreUrl;
 
           await self.ccm.store( {
-            'name': courseId + '_course_info', 'url': storeUrl, 'parent': self, 'method': 'POST'
+            'name': 'courses#' + courseId, 'url': storeUrl, 'parent': self, 'method': 'POST'
           } )
-          .then( infoStore => { courseInfoStore = infoStore; } );
-
-          setupNavigation( pCourseName );
-          renderArticle( 'home' );
+          .then(
+            infoStore => { courseInfoStore = infoStore; }
+          );
+          setupNavigation( pCourseName )
+          .then(
+            () => renderArticle( 'home' ),
+            reason => {
+              $.setContent( article, $.html( self.html.alert_message, {
+                'type': 'warning', 'message': reason
+              } ) );
+            }
+          );
         } )
         .catch( exception => {
           console.log( exception );
@@ -243,7 +249,7 @@
          * @description Setup top navigation bar for class
          * @param {String} courseName
          */
-        function setupNavigation( courseName ) {
+        async function setupNavigation( courseName ) {
           header.appendChild( $.html( self.html.navigation, {
             'course-name': courseName,
             'course-name-click': () => { renderArticle( 'home' ) },
@@ -258,9 +264,19 @@
           // setup signing in and out
           const loginArea = header.querySelector( '#login-area' );
           if ( self.user && self.user.isLoggedIn() ) {
-            getUserInfo().then( userInfo => renderLoggedInNav( loginArea, userInfo ) );
+            return getUserInfo().then(
+              userInfo => {
+                renderLoggedInNav( loginArea, userInfo );
+                return true;
+              },
+              () => {
+                renderLoggedOutNav( loginArea );
+                return Promise.reject( 'querying for user role failed' );
+              }
+            );
           } else {
             renderLoggedOutNav( loginArea );
+            return Promise.reject( 'Please login to continue!' );
           }
         }  // end setupNavigation()
 
@@ -380,7 +396,7 @@
               // add configurations to the CCM instance
               content.push( {
                 "data": { "store": [ "ccm.store", {
-                  "name": courseId + '_' + entryConfig.collection_id,
+                  "name": entryConfig.collection_id + '#' + courseId,
                   "url": storeUrl, "method": "POST"
                 } ] },
                 "user_realm": self.user_realm

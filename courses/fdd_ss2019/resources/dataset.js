@@ -23,7 +23,7 @@ ccm.files[ 'dataset.js' ] = {
             "title": "Questions and Answers",
             "content": [ "ccm.instance", "../../components/question_answer/ccm.question_answer.js" ],
             // unique ID of collection containing data for the entry
-            "collection_id": "20190627",
+            "collection_id": "fd_ss2019_20190627",
             "entry_type": "qa"
           }
         ]

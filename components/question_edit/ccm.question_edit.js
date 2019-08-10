@@ -154,9 +154,9 @@
       this.start = async () => {
         // get dataset for rendering
         const self = this;
-        let questionData = {};
-        let ansDeadline;
-        let rankDeadline;
+
+        // has logger instance? => log 'start' event
+        self.logger && self.logger.log( 'start' );
 
         // create a div element for rendering content and allow for CSS loading
         const mainDivElem = document.createElement( 'div' );
@@ -188,10 +188,10 @@
           return;
         }
 
-        // has logger instance? => log 'start' event
-        self.logger && self.logger.log( 'start' );
-
         // render main HTML structure
+        let questionData = {};
+        let ansDeadline;
+        let rankDeadline;
         $.setContent( mainDivElem, $.html( self.html.main, {
 
           // handle adding new questions
@@ -251,7 +251,9 @@
         } ) );
 
         // load initial data from store
-        await self.data.store.get( self.constants.key_questions ).then( qStoreData => {
+        await self.data.store.get( self.constants.key_questions )
+        .then(
+          qStoreData => {
             Object.assign( questionData, qStoreData && qStoreData.entries ? qStoreData.entries : {} );
 
             // set deadline date & time for answering questions
