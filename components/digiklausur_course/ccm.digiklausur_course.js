@@ -227,9 +227,9 @@
           setupNavigation( pCourseName )
           .then(
             () => renderArticle( 'home' ),
-            () => {
+            reason => {
               $.setContent( article, $.html( self.html.alert_message, {
-                'type': 'warning', 'message': 'Login unsuccessful! Please try again.'
+                'type': 'warning', 'message': reason
               } ) );
             }
           );
@@ -276,7 +276,7 @@
             );
           } else {
             renderLoggedOutNav( loginArea );
-            return Promise.reject( 'not logged in' );
+            return Promise.reject( 'Please login to continue!' );
           }
         }  // end setupNavigation()
 

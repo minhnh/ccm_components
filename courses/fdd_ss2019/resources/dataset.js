@@ -10,8 +10,7 @@ ccm.files[ 'dataset.js' ] = {
   // unique ID for course, to be prepended to 'collection_id' below when accessing database
   "course_id": "fd_ss2019",
 
-  // "store_url": "https://digiklausur.ddns.net",
-  "store_url": "http://localhost:3000",
+  "store_url": "https://digiklausur.ddns.net",
 
   "home_menu": {
     "key": "home_menu",
