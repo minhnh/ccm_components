@@ -8,7 +8,7 @@ ccm.files[ "dataset.js" ] = {
   "course_name": "Course Name",
 
   // unique ID for course, to be prepended to 'collection_id' below when accessing database
-  "course_id": "question_answers",
+  "course_id": "demo",
 
   "store_url": "https://digiklausur.ddns.net",
 
@@ -23,7 +23,7 @@ ccm.files[ "dataset.js" ] = {
             "title": "Questions and Answers",
             "content": [ "ccm.instance", "../../components/question_answer/ccm.question_answer.js" ],
             // unique ID of collection containing data for the entry
-            "collection_id": "sample",
+            "collection_id": "question_answers_sample",
             "entry_type": "qa"
           }
         ]
@@ -35,7 +35,7 @@ ccm.files[ "dataset.js" ] = {
           {
             "title": "Questions and Answers",
             "content": [ "ccm.instance", "../../components/question_answer/ccm.question_answer.js" ],
-            "collection_id": "sample_2",
+            "collection_id": "question_answers_sample_2",
             "entry_type": "qa"
           }
         ]

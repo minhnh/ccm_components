@@ -160,8 +160,9 @@
           ] )
           .then( ( [ questionData, userData ] ) => {
             const qaData = {};
+            if ( !questionData ) questionData = {};
             const deadline = questionData.answer_deadline;
-            questionData && questionData.entries && Object.keys( questionData.entries ).forEach( questionId => {
+            questionData.entries && Object.keys( questionData.entries ).forEach( questionId => {
               qaData[ questionId ] = {};
               qaData[ questionId ][ 'question' ] = questionData.entries[ questionId ];
             } );
