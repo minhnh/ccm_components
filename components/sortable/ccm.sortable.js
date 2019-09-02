@@ -54,7 +54,7 @@
         // load bootstrap CSS
         self.ccm.load(
           { url: self.css.bootstrap, type: 'css' },
-          { url: self.css.bootstrap, type: 'css', context: self.element }
+          { url: self.css.bootstrap, type: 'css', context: self }
         );
 
         // load Javascript modules
