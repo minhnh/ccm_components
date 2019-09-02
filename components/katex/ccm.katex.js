@@ -18,18 +18,26 @@
       },
 
       'js': {
-        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js',
         'katex': '../../lib/js/katex.min.js',
         'katex_auto_render': '../../lib/js/auto-render.min.js'
       },
 
       'data': { 'store': [ 'ccm.store' ] },
 
+      'editable': true,
+
       'html': {
-        'main': [
-          { 'id': 'math-edit', 'inner': '%math-edit-text%' },
-          { 'id': 'math-render', 'inner': '' }
-        ]
+        'main': {
+          'class': 'row',
+          'inner': [
+            { 'id': 'math-edit' },
+            { 'id': 'math-render', "class": "col-3", 'inner': '%math-render-text%' }
+          ]
+        },
+
+        'math_textarea': {
+          'tag': 'textarea', 'inner': "%math-edit-text%", "class": "form-control", "onchange": "%change%"
+        }
       }
     },
 
@@ -50,6 +58,8 @@
 
         // load bootstrap CSS
         self.ccm.load(
+          { url: self.css.bootstrap, type: 'css' },
+          { url: self.css.bootstrap, type: 'css', context: self },
           { url: self.css.katex, type: 'css' },
           { url: self.css.katex, type: 'css', context: self }
         );
@@ -62,23 +72,27 @@
 
         // get dataset for rendering
         let dataset = await $.dataset( self.data );
+        let textData = dataset && dataset.text ? dataset.text : "";
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main, { 'math-edit-text': dataset.content.text } ) );
+        $.setContent( self.element, $.html( self.html.main, { 'math-render-text': textData } ) );
 
-        // contain list items
-        const mathElem = self.element.querySelector( '#math-render' );
-        const mathEditElem = self.element.querySelector( '#math-edit' );
+        // render math equations
+        const mathRenderElem = self.element.querySelector( '#math-render' );
+        renderMathInElement( mathRenderElem, { "delimiters": [ { left: "$", right: "$", display: false } ] } );
 
-        renderMathInElement(mathEditElem, { "delimiters": [
-          {left: "$$", right: "$$", display: false},
-          {left: "\\(", right: "\\)", display: false},
-          {left: "\\[", right: "\\]", display: false}
-        ] });
-
-        katex.render("c = \\pm\\sqrt{a^2 + b^2}", mathElem, {
-          throwOnError: false, displayMode: false
-        });
+        // render textarea field if editing is allowed
+        if ( self.editable ) {
+          const mathEditElem = self.element.querySelector( '#math-edit' );
+          mathEditElem.className = "col-5";
+          $.setContent( mathEditElem, $.html( self.html.math_textarea, {
+            'math-edit-text': textData,
+            'change': event => {
+              mathRenderElem.innerText = event.srcElement.value;
+              renderMathInElement( mathRenderElem, { "delimiters": [ { left: "$", right: "$", display: false } ] } );
+            }
+          } ) );
+        }
       };  // end start()
     }  // end Instance()
   };  // end component
