@@ -31,7 +31,7 @@
           'class': 'row',
           'inner': [
             { 'id': 'math-edit' },
-            { 'id': 'math-render', "class": "col-3", 'inner': '%math-render-text%' }
+            { 'id': 'math-render', "class": "col-4", 'inner': '%math-render-text%' }
           ]
         },
 

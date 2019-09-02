@@ -1,3 +1,7 @@
+- name: ccm.katex.js
+  path: components/katex
+  description: Textarea that can render equations
+
 - name: ccm.sortable.js
   path: components/sortable
   description: List with sortable items
