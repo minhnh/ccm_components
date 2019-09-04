@@ -32,8 +32,8 @@
         'main': {
           'class': 'row p-0',
           'inner': [
-            { 'id': 'math-edit', 'class': 'p-0 col-6' },
-            { 'id': 'math-render', 'class': 'col-6' }
+            { 'id': 'math-edit' },
+            { 'id': 'math-render', 'class': 'pl-4 col' }
           ]
         },
 
@@ -89,6 +89,7 @@
         // render textarea field if editing is allowed
         if ( self.editable ) {
           const mathEditElem = self.element.querySelector( '#math-edit' );
+          mathEditElem.className = 'p-0 col-6'
           $.setContent( mathEditElem, $.html( self.html.math_textarea, {
             'change': event => {
               textData = event.srcElement.value;

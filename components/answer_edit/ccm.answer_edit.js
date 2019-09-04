@@ -16,6 +16,8 @@
       'components': {
         'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
 
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
+
         'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
 
@@ -62,34 +64,22 @@
           'inner': [
             // question label and text
             {
-              'class': 'input-group row m-1 mt-3', 'inner': [
+              'class': 'input-group m-1', 'inner': [
                 {
-                  'class': 'input-group-prepend col-sm-0 p-1', 'inner': [ {
-                    'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%_question', 'inner': 'Question'
-                  } ]
+                  'class': 'input-group-prepend text-secondary pt-1', 'tag': 'label', 'inner': 'Question',
+                  'for': 'q_%question_id%_question'
                 },
-                {
-                  'class': 'col-sm-8', 'inner': [ {
-                    'tag': 'textarea', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
-                    'style': 'resize: none; overflow: auto;', 'id': 'q_%question_id%_question'
-                  } ]
-                }
+                { 'class': 'p-1 text-info', 'id': 'q_%question_id%_question' }
               ]
             },
             // answer label and text box
             {
-              'class': 'input-group row m-1 mb-3', 'inner': [
+              'class': 'input-group m-1 mb-3 row', 'inner': [
                 {
-                  'class': 'input-group-prepend', 'inner': [ {
-                    'tag': 'label', 'class': 'input-group-text', 'for': 'q_%question_id%_answer', 'inner': 'Answer'
-                  } ]
+                  'class': 'input-group-prepend input-group-text col-0 mr-3', 'tag': 'label',
+                  'for': 'q_%question_id%_answer', 'inner': 'Answer'
                 },
-                {
-                  'class': 'col-md-8 p-0', 'inner': [ {
-                    'tag': 'textarea', 'class': 'form-control', 'aria-label': 'Answer',
-                    'style': 'resize: vertical; overflow: auto;', 'id': 'q_%question_id%_answer'
-                  } ]
-                }
+                { 'class': 'p-0 col-11', 'id': 'q_%question_id%_answer' }
               ]
             }
           ],
@@ -104,10 +94,15 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
 
-      'js': { "crypto": "../../lib/js/crypto-js.min.js" }
+      'js': {
+        "crypto": "../../lib/js/crypto-js.min.js",
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js'
+      }
     },
 
     Instance: function () {
@@ -140,7 +135,6 @@
         await self.ccm.load( { url: self.js.crypto, type: 'js' } );
 
         // login
-        let username;
         self.user = await self.components.user.start( {
           "css": [ "ccm.load",
             { url: self.css.bootstrap, type: 'css' }, { url: self.css.bootstrap, type: 'css', context: 'head' },
@@ -149,6 +143,7 @@
           "title": "Guest Mode: please enter any username", "realm": self.user_realm
         } );
 
+        const qaData = {};
         await self.user.login()
         .then ( () => {
           const username = self.user.data().user;
@@ -159,7 +154,6 @@
             self.data.store.get( username )
           ] )
           .then( ( [ questionData, userData ] ) => {
-            const qaData = {};
             if ( !questionData ) questionData = {};
             const deadline = questionData.answer_deadline;
             questionData.entries && Object.keys( questionData.entries ).forEach( questionId => {
@@ -178,7 +172,7 @@
 
             renderContent( mainDivElem, qaData, username );
             renderDeadlineTimer( mainDivElem, deadline );
-            renderQAPairs( mainDivElem, qaData );
+            renderQAPairs( mainDivElem, qaData, deadline );
 
           } )
           .catch( exception => {
@@ -199,13 +193,11 @@
             'save-click': async ( event ) => {
               let payload = { key : username, answers: {}, ranking: {} };
 
-              Object.keys( qaData ).forEach( ( key ) => {
-                const questionIdHtml = self.constants.qa_prefix + key;
-                let aId = "textarea#" + questionIdHtml + "_answer";
-                const ansText = rootElem.querySelector( aId ).value;
+              Object.keys( qaData ).forEach( qId => {
+                const ansText = qaData[ qId ][ 'answer' ];
                 const hashObj = CryptoJS.SHA256( ansText.trim() );
                 const ansHash = hashObj.toString().substring( 0, self.constants.truncate_length );
-                payload.answers[ key ] = { 'text': ansText, 'hash': ansHash }
+                payload.answers[ qId ] = { 'text': ansText, 'hash': ansHash }
               });
 
               await self.data.store.set( payload ).then( () => {
@@ -228,8 +220,13 @@
           } );
         }  // end renderDeadlineTimer
 
-        function renderQAPairs( rootElem, qaData ) {
+        function renderQAPairs( rootElem, qaData, deadline ) {
           const contentElem = rootElem.querySelector( '#content' );
+          let allowEdit = true;
+          if ( deadline ) {
+            const dlObj = new Date( deadline.date + ' ' + deadline.time );
+            if ( dlObj - new Date() < 0 ) allowEdit = false;
+          }
 
           Object.keys( qaData ).forEach( ( questionId ) => {
             const answerText = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
@@ -237,11 +234,22 @@
 
             const qaDiv = $.html( self.html.qa_entry, { 'question_id': questionId } );
 
-            // to avoid issue with backlashes, set textarea values for question and answers manually:
+            // create non-editable katex instance for question
             const questionTextArea = qaDiv.querySelector( `#q_${ questionId }_question` );
-            questionTextArea.value = questionText;
+            self.components.katex.start( {
+              root: questionTextArea, "css": self.css, "js": self.js, 'editable': false,
+              data: { 'id': questionId, 'text': questionText }
+            } );
+
+            // to avoid issue with backlashes, set textarea values for question and answers manually:
             const answerTextArea = qaDiv.querySelector( `#q_${ questionId }_answer` );
-            answerTextArea.value = answerText;
+            self.components.katex.start( {
+              root: answerTextArea, "css": self.css, "js": self.js, 'editable': allowEdit,
+              data: { 'id': questionId, 'text': answerText },
+              onchange: ( newAnsText ) => {
+                qaData[ questionId ][ 'answer' ] = newAnsText;
+              }
+            } );
 
             contentElem.appendChild( qaDiv );
           } );
