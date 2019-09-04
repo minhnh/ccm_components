@@ -18,6 +18,8 @@
 
         'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
 
+        'question_answer': [ 'ccm.component', '../question_answer/ccm.question_answer.js' ],
+
         'question_edit': [ 'ccm.component', '../question_edit/ccm.question_edit.js' ],
 
         'answer_edit': [ 'ccm.component', '../answer_edit/ccm.answer_edit.js' ],
@@ -25,6 +27,8 @@
         'answer_ranking': [ 'ccm.component', '../answer_ranking/ccm.answer_ranking.js' ],
 
         'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ],
+
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
 
         'sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
 
@@ -37,14 +41,17 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
 
-      'js': [ 'ccm.load', [
-          { url: '../../lib/js/jquery-3.3.1.slim.min.js', type: 'js', context: 'head' },
-          { url: '../../lib/js/bootstrap.bundle.min.js', type: 'js', context: 'head' }
-        ]
-      ],
+      'js': {
+        "crypto": "../../lib/js/crypto-js.min.js",
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js',
+        'sortable': '../../lib/js/Sortable.min.js',
+        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
+      },
 
       'html': {
         'main': {
@@ -388,29 +395,27 @@
         }  // end renderHome()
 
         function renderMenuEntry( entryConfig ) {
-          let content = $.clone( entryConfig.content );
           return $.html( self.html.entry, {
             'icon': self.entry_icons[ entryConfig.entry_type ],
             'title': entryConfig.title,
             'click': async () => {
-              // add configurations to the CCM instance
-              content.push( {
-                "data": { "store": [ "ccm.store", {
-                  "name": entryConfig.collection_id + '#' + courseId,
-                  "url": storeUrl, "method": "POST"
-                } ] },
-                "user_realm": self.user_realm
-              } );
-
-              // content is given as ccm dependency? => solve dependency
-              content = await $.solveDependency( content );
-              // content is ccm instance? => render instance as content
-              if ( $.isInstance( content ) ) {
-                $.setContent( article, content.root );
-                await content.start();
+              const compName = $.clone( entryConfig.component_name );
+              if ( !self.components[ compName ] ) {
+                $.setContent( article, $.html( self.html.alert_message, {
+                  'type': 'danger', 'message': 'component does not exist for menu entry: ' + compName
+                } ) );
+                return;
               }
-              // render given content as HTML
-              else $.setContent( article, $.html( content ) );
+
+              // add configurations to the CCM instance
+              self.components[ compName ].start( {
+                'root': article, 'js': self.js, 'css': self.css, 'user_realm': self.user_realm,
+                'components': self.components,
+                'data': { 'store': [ 'ccm.store', {
+                  'name': entryConfig.collection_id + '#' + courseId,
+                  'url': storeUrl, 'method': 'POST'
+                } ] }
+              } );
             }
           } );
         }  // end renderMenuEntry()

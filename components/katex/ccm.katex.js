@@ -33,12 +33,13 @@
           'class': 'row p-0',
           'inner': [
             { 'id': 'math-edit', 'class': 'p-0 col-6' },
-            { 'id': 'math-render', "class": "col-4" }
+            { 'id': 'math-render', 'class': 'col-6' }
           ]
         },
 
         'math_textarea': {
-          'id': 'text-edit-input', 'tag': 'textarea', "class": "form-control p-1 pl-4", "onchange": "%change%"
+          'id': 'text-edit-input', 'tag': 'textarea', "class": "form-control p-1 pl-4", "onchange": "%change%",
+          'style': 'resize: vertical; overflow: auto;'
         }
       }
     },
