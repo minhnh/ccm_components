@@ -21,6 +21,8 @@
 
         'sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
 
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
+
         'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
 
@@ -55,21 +57,12 @@
         'rank_entry': {
           'inner': [
             {
-              'id': 'question', 'class': 'input-group row m-1 pt-4',
-              'inner': [
+              'class': 'input-group m-1 row', 'inner': [
                 {
-                  'class': 'input-group-prepend col-sm-0 p-1',
-                  'inner': [ {
-                    'tag': 'label', 'class': 'text-secondary', 'for': 'q_%question_id%', 'inner': 'Question'
-                  } ]
+                  'class': 'input-group-prepend text-secondary p-1 col-0 mr-3', 'tag': 'label', 'inner': 'Question',
+                  'for': 'q_%question_id%'
                 },
-                {
-                  'class': 'col-sm-8',
-                  'inner': [ {
-                    'tag': 'textarea', 'readonly': true, 'class': 'form-control-plaintext p-1 text-info',
-                    'style': 'resize: none; overflow: auto;', 'id': 'q_%question_id%'
-                  } ]
-                }
+                { 'class': 'p-1 text-info col-11', 'id': 'q_%question_id%' }
               ]
             },
             { 'id': 'answers' }
@@ -92,12 +85,15 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
 
       'js': {
         'sortable': '../../lib/js/Sortable.min.js',
-        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
+        'jquery': '../../lib/js/jquery-3.3.1.slim.min.js',
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js'
       },
     },
 
@@ -169,8 +165,8 @@
           } ) );
           const ansDlTimerElem = mainDivElem.querySelector( '#deadline-timer' );
           await self.components.countdown.start( {
-            root: ansDlTimerElem, 'css': self.css,  'deadline': ansDeadline,
-            'onfinish': () => renderContent()
+            root: ansDlTimerElem, 'css': self.css, 'js': self.js, 'components': self.components,
+            'deadline': ansDeadline, 'onfinish': () => renderContent()
           } );
         } else {
           renderContent();
@@ -341,9 +337,12 @@
         async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
           const qaRankingEntry = $.html( self.html.rank_entry, { 'question_id': questionId } );
 
-          // set text field manually to avoid problems with backslashes
+          // start katex component to render equations in questions
           const questionTextArea = qaRankingEntry.querySelector( `#q_${ questionId }` );
-          questionTextArea.value = questionText;
+          self.components.katex.start( {
+            root: questionTextArea, "css": self.css, "js": self.js, 'editable': false,
+            data: { 'id': questionId, 'text': questionText }
+          } );
 
           // render the answer ranking area
           const answersDiv = qaRankingEntry.querySelector( '#answers' );
