@@ -64,12 +64,12 @@
           'inner': [
             // question label and text
             {
-              'class': 'input-group m-1', 'inner': [
+              'class': 'input-group m-1 row', 'inner': [
                 {
-                  'class': 'input-group-prepend text-secondary pt-1', 'tag': 'label', 'inner': 'Question',
+                  'class': 'input-group-prepend text-secondary p-1 col-0 mr-3', 'tag': 'label', 'inner': 'Question',
                   'for': 'q_%question_id%_question'
                 },
-                { 'class': 'p-1 text-info', 'id': 'q_%question_id%_question' }
+                { 'class': 'p-1 text-info col-11', 'id': 'q_%question_id%_question' }
               ]
             },
             // answer label and text box

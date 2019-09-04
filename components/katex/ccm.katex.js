@@ -39,7 +39,8 @@
 
         'math_textarea': {
           'id': 'text-edit-input', 'tag': 'textarea', "class": "form-control p-1 pl-4", "onchange": "%change%",
-          'style': 'resize: vertical; overflow: auto;'
+          'style': 'resize: vertical; overflow: auto;',
+          'placeholder': "Enclose LaTex equations with '$' to render."
         }
       }
     },
