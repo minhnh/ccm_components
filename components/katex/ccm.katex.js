@@ -12,6 +12,10 @@
     ccm: '../../lib/js/ccm/ccm-22.4.0.min.js',
 
     config: {
+      'editable': true,
+
+      'onchange': null,
+
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
         'katex': '../../lib/css/katex.min.css'
@@ -24,19 +28,17 @@
 
       'data': { 'store': [ 'ccm.store' ] },
 
-      'editable': true,
-
       'html': {
         'main': {
-          'class': 'row',
+          'class': 'row p-0',
           'inner': [
-            { 'id': 'math-edit' },
-            { 'id': 'math-render', "class": "col-4", 'inner': '%math-render-text%' }
+            { 'id': 'math-edit', 'class': 'p-0 col-6' },
+            { 'id': 'math-render', "class": "col-4" }
           ]
         },
 
         'math_textarea': {
-          'tag': 'textarea', 'inner': "%math-edit-text%", "class": "form-control", "onchange": "%change%"
+          'id': 'text-edit-input', 'tag': 'textarea', "class": "form-control p-1 pl-4", "onchange": "%change%"
         }
       }
     },
@@ -44,6 +46,7 @@
     Instance: function () {
 
       let $;
+      let textData;
 
       this.ready = async () => {
         // set shortcut to help functions
@@ -72,28 +75,35 @@
 
         // get dataset for rendering
         let dataset = await $.dataset( self.data );
-        let textData = dataset && dataset.text ? dataset.text : "";
+        textData = dataset && dataset.text ? dataset.text : "";
 
         // render main HTML structure
-        $.setContent( self.element, $.html( self.html.main, { 'math-render-text': textData } ) );
+        $.setContent( self.element, $.html( self.html.main ) );
 
-        // render math equations
+        // render math equations, set inner text values directly to avoid special character issues with CCM placeholders
         const mathRenderElem = self.element.querySelector( '#math-render' );
+        mathRenderElem.innerText = textData;
         renderMathInElement( mathRenderElem, { "delimiters": [ { left: "$", right: "$", display: false } ] } );
 
         // render textarea field if editing is allowed
         if ( self.editable ) {
           const mathEditElem = self.element.querySelector( '#math-edit' );
-          mathEditElem.className = "col-5";
           $.setContent( mathEditElem, $.html( self.html.math_textarea, {
-            'math-edit-text': textData,
             'change': event => {
-              mathRenderElem.innerText = event.srcElement.value;
+              textData = event.srcElement.value;
+              mathRenderElem.innerText = textData;
               renderMathInElement( mathRenderElem, { "delimiters": [ { left: "$", right: "$", display: false } ] } );
+              // pass 'textData' to component's event handler
+              self.onchange && self.onchange( textData );
             }
           } ) );
+          const textAreaElem = mathEditElem.querySelector( '#text-edit-input' );
+          textAreaElem.value = textData;
         }
       };  // end start()
+
+      this.getTextData = () => textData;
+
     }  // end Instance()
   };  // end component
 

@@ -8,7 +8,7 @@ ccm.files[ 'configs.js' ] = {
     "key": "demo",
     "data": {
       "id": "katex_demo",
-      "text": 'test inline equation $$\\\\alpha + \\\\beta^2$$'
+      "text": 'test inline equation $\\alpha + \\beta^2$'
     }
   }
 };
