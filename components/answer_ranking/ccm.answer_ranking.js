@@ -364,7 +364,7 @@
               };
             }
             sortableObjects[ questionId ] = await self.components.sortable.start( {
-              root: answersDiv, "css": self.css, "js": self.js,
+              root: answersDiv, 'css': self.css, 'js': self.js, 'components': self.components,
               data: { 'id': questionId + '_answers', 'items': answerEntries }
             } );
           }
