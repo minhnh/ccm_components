@@ -10,7 +10,7 @@ ccm.files[ 'configs.js' ] = {
     "data": {
       "id": "sortable_demo",
       "items": [
-        { "id": "item_1", "content": "Item 1" },
+        { "id": "item_1", "content": "Item 1 equation $\\alpha + \\beta^2$" },
         { "id": "item_2", "content": "Item 2" },
         { "id": "item_3", "content": "Item 3" },
         { "id": "item_4", "content": "Item 4" }

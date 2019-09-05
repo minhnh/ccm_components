@@ -18,6 +18,8 @@
       'components': {
         'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
 
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
+
         'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
       },
 
@@ -143,8 +145,14 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
+
+      'js': {
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js'
+      }
     },
 
     Instance: function () {
@@ -272,7 +280,8 @@
               if ( isQuestionSelected[ questionId ] ) return;
 
               // set clicked question tab to active and show corresponding answer panel, update 'isQuestionSelected'
-              setQuestionTabActive( event.srcElement, true );
+              const currentQTab = questionTabsElem.querySelector( '#' + getQuestionTabId( questionId ) );
+              setQuestionTabActive( currentQTab, true );
               isQuestionSelected[ questionId ] = true;
               const ansPanel = ansPanelsElem.querySelector( '#' + getAnswerPanelId( questionId ) )
               setAnsPanelActive( ansPanel, true );
@@ -295,8 +304,11 @@
             }
           } );  // end $.html()
 
-          // set question text manually to avoid issues with backslashes
-          questionTab.innerText = questionText;
+          // start a katex instance to render equations in the question
+          self.components.katex.start( {
+            root: questionTab, "css": self.css, "js": self.js, 'editable': false,
+            data: { 'id': 'content_' + questionId, 'text': questionText }
+          } );
 
           setQuestionTabActive( questionTab, isActive );
           return questionTab;
@@ -350,9 +362,14 @@
           }
 
           ansIndexCell.innerHTML = ansIndex;
-          ansTextCell.innerText = ansText;
           ansScoreCell.innerHTML = score;
           ansNumRankingCell.innerHTML = numRankings;
+
+          // start a katex instance to render equations in the answer
+          self.components.katex.start( {
+            root: ansTextCell, "css": self.css, "js": self.js, 'editable': false,
+            data: { 'id': 'ans_content', 'text': ansText }
+          } );
         }
 
         function organizeAnswerScores( answers ) {

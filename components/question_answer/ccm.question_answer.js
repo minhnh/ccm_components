@@ -25,6 +25,8 @@
 
         'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ],
 
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
+
         'sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
 
         'countdown': [ 'ccm.component', '../countdown_timer/ccm.countdown_timer.js' ]
@@ -80,11 +82,14 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
 
       'js': {
         "crypto": "../../lib/js/crypto-js.min.js",
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js',
         'sortable': '../../lib/js/Sortable.min.js',
         'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
       }
@@ -234,7 +239,8 @@
 
           // load CCM component in the panel
           viewComp.start( {
-            root: divElem, data: self.data, 'js': self.js, 'css': self.css, 'user_realm': self.user_realm
+            'root': divElem, 'data': self.data, 'js': self.js, 'css': self.css, 'user_realm': self.user_realm,
+            'components': self.components
           } );
           return divElem;
         }  // end getMenuPanel()

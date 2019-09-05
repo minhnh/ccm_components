@@ -15,6 +15,8 @@
     config: {
       'components': {
         'user': [ 'ccm.component', '../../lib/js/ccm/ccm.user-9.2.0.min.js' ],
+
+        'katex': [ 'ccm.component', '../katex/ccm.katex.js' ]
       },
 
       "user_realm": "guest", "user": null,
@@ -106,8 +108,8 @@
             },
             // question input
             {
-              'tag': 'textarea', 'class': 'form-control col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
-              'aria-describedby': 'q_%question_id%_label', 'id': 'q_%question_id%_text', 'onblur': '%blur%'
+              'class': 'col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
+              'aria-describedby': 'q_%question_id%_label', 'id': 'q_%question_id%_text'
             },
             // button to remove question
             {
@@ -133,10 +135,15 @@
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
-        'fontawesome': '../../lib/css/fontawesome-all.min.css'
+        'fontawesome': '../../lib/css/fontawesome-all.min.css',
+        'katex': '../../lib/css/katex.min.css'
       },
 
-      'js': { "crypto": "../../lib/js/crypto-js.min.js" }  // crypto-js module for hashing question data
+      'js': {
+        "crypto": "../../lib/js/crypto-js.min.js",  // crypto-js module for hashing question data
+        'katex': '../../lib/js/katex.min.js',
+        'katex_auto_render': '../../lib/js/auto-render.min.js'
+      }
     },
 
     Instance: function () {
@@ -189,14 +196,15 @@
         }
 
         // render main HTML structure
+        const emptyQuestionId = getQuestionId( '' );
         let questionData = {};
+        let questionElements = {};
         let ansDeadline;
         let rankDeadline;
         $.setContent( mainDivElem, $.html( self.html.main, {
 
           // handle adding new questions
           'add-question-click': async () => {
-            const emptyQuestionId = getQuestionId( '' );
 
             if ( questionData[ emptyQuestionId ] ) return;
 
@@ -293,46 +301,47 @@
           const questionsElem = mainDivElem.querySelector( '#questions' );
           questionsElem.innerHTML = '';
           Object.keys( questionData ).forEach( questionId => {
-            const question = questionData[ questionId ];
-            questionsElem.appendChild( renderQuestionDiv( questionId, question ? question : '' ) );
+            if ( !questionElements[ questionId ] ) {
+              const question = questionData[ questionId ];
+              questionElements[ questionId ] = renderQuestionDiv( questionId, question ? question : '' );
+            }
+            questionsElem.appendChild( questionElements[ questionId ] );
           } );
         }
 
         function renderQuestionDiv( questionId, questionText ) {
           // replace '%question_id%' with appropriate values, handle events
           const questionDiv = $.html( self.html.question_entry, {
-            'question_id': questionId, 'question_text': questionText,
-            // write text content to dataset when question field is unfocused
-            'blur': ( event ) => {
-              const inputElem = event.srcElement;
-              questionData[ questionId ] = inputElem ? inputElem.value : '';
-              reindexQuestions();
-            },
+            'question_id': questionId,
+
             // handle removing a question
             'click': async () => {
               delete questionData[ questionId ];
               renderQuestions();
             }
           } );
+
           // since CCM HTML helper has issue with backslash ('\'), set question text manually
           const qTextArea = questionDiv.querySelector( `#q_${ questionId }_text` );
-          qTextArea.value = questionText;
+          self.components.katex.start( {
+            root: qTextArea, "css": self.css, "js": self.js,
+            data: { 'id': questionId, 'text': questionText },
+            onchange: ( newQuestion ) => {
+              const newQuestionId = getQuestionId( newQuestion );
+              // make no changes if the question value has not changed
+              if ( newQuestionId == questionId ) return;
+
+              // else update 'questionElements' and 'questionData'
+              questionData[ newQuestionId ] = newQuestion;
+              questionElements[ newQuestionId ] = questionDiv;
+              delete questionData[ questionId ];
+              delete questionElements[ questionId ];
+            }
+          } );
+
+          // qTextArea.value = questionText;
           return questionDiv;
         }  // end renderQuestionDiv()
-
-        // ensure the question ids are correct
-        function reindexQuestions() {
-          Object.keys( questionData ).forEach( key => {
-            // calculate new question ID
-            const questionId = getQuestionId( questionData[ key ] );
-
-            // return if key matches calculated id
-            if ( questionId === key ) return;
-
-            questionData[ questionId ] = questionData[ key ];
-            delete questionData[ key ];
-          } );
-        }
 
         function getNextDay( date ) {
           // get the next day, at current time
