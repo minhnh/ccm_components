@@ -65,7 +65,7 @@
                 { 'class': 'p-1 text-info col-11', 'id': 'q_%question_id%' }
               ]
             },
-            { 'id': 'answers' }
+            { 'id': 'answers', 'class': 'mb-4 ml-2' }
           ]
         },  // end 'rank_entry'
 
