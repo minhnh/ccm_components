@@ -23,6 +23,8 @@
 
       "data": { "store": [ "ccm.store" ] },
 
+      "initial_questions": [ "ccm.store" ],
+
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
@@ -38,8 +40,8 @@
               'id': 'answer-deadline', 'class': 'input-group mb-1',
               'inner': [
                 {
-                  'class': 'input-group-prepend',
-                  'inner': '<span class="input-group-text pr-3">Answer Deadline</span>'
+                  'class': 'input-group-prepend pl-1',
+                  'inner': [ { "tag": "span", "class": "input-group-text", "inner": "Answer Deadline" } ]
                 },
                 {
                   'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'ans_dl_date',
@@ -58,7 +60,7 @@
               'inner': [
                 {
                   'class': 'input-group-prepend',
-                  'inner': '<span class="input-group-text">Ranking Deadline</span>'
+                  'inner': [ { "tag": "span", "class": "input-group-text", "inner": "Ranking Deadline" } ]
                 },
                 {
                   'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'rank_dl_date',
@@ -70,6 +72,11 @@
                 },
                 { 'id': 'invalid-date-notification' }
               ]
+            },
+
+            // Counter for number of questions
+            {
+              "class": "text-info mb-3", "inner": 'Number of questions: <span id="question-num"></span>'
             },
 
             // HTML area where questions will be rendered
@@ -287,8 +294,14 @@
             const rankTimeInput = mainDivElem.querySelector( '#rank-dl-time' );
             rankTimeInput.setAttribute( 'value', rankDeadline.time );
 
-            // render questions
-            renderQuestions();
+            // if initial questions are specified, fill questionData
+            self.initial_questions.get( 'questions' ).then(
+              initQuestions => {
+                initQuestions && initQuestions.forEach( qText => {
+                  questionData[ getQuestionId( qText ) ] = qText;
+                } );
+              }
+            ).then( () => renderQuestions() );
           },
           reason => {   // read questions failed
             console.log( reason.error );
@@ -299,14 +312,18 @@
 
         function renderQuestions() {
           const questionsElem = mainDivElem.querySelector( '#questions' );
+          const questionNumElem = mainDivElem.querySelector( "#question-num" );
           questionsElem.innerHTML = '';
+          let numQuestions = 0;
           Object.keys( questionData ).forEach( questionId => {
+            numQuestions++;
             if ( !questionElements[ questionId ] ) {
               const question = questionData[ questionId ];
               questionElements[ questionId ] = renderQuestionDiv( questionId, question ? question : '' );
             }
             questionsElem.appendChild( questionElements[ questionId ] );
           } );
+          questionNumElem.innerHTML = numQuestions;
         }
 
         function renderQuestionDiv( questionId, questionText ) {
@@ -327,15 +344,16 @@
             root: qTextArea, "css": self.css, "js": self.js,
             data: { 'id': questionId, 'text': questionText },
             onchange: ( newQuestion ) => {
+              const questionIdClone = $.clone( questionId );
               const newQuestionId = getQuestionId( newQuestion );
               // make no changes if the question value has not changed
-              if ( newQuestionId == questionId ) return;
+              if ( newQuestionId == questionIdClone ) return;
 
               // else update 'questionElements' and 'questionData'
               questionData[ newQuestionId ] = newQuestion;
               questionElements[ newQuestionId ] = questionDiv;
-              delete questionData[ questionId ];
-              delete questionElements[ questionId ];
+              delete questionData[ questionIdClone ];
+              delete questionElements[ questionIdClone ];
             }
           } );
 
