@@ -2,3 +2,6 @@
   path: courses/fdd_ss2019
   description: Fault Detection & Diagnosis SS 2019
 
+- name: WuS WS 2019
+  path: courses/wus_ws2019
+  description: Grundlagen von Wahrscheinlichkeitstheorie und Statistik WS 2019
