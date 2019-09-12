@@ -334,6 +334,7 @@
             // handle removing a question
             'click': async () => {
               delete questionData[ questionId ];
+              delete questionElements[ questionId ];
               renderQuestions();
             }
           } );
