@@ -378,7 +378,7 @@
           for ( ansId in answers ) {
             const authorList = answers[ ansId ].authors ? Object.keys( answers[ ansId ].authors ) : [];
 
-            // seperate the unranked answer
+            // separate the unranked answer
             const numRankings = Object.keys( answers[ ansId ].ranked_by ).length;
             if ( numRankings === 0 ) {
               answerScores.unranked.push( { 'text': answers[ ansId ].text, 'authors': authorList } );

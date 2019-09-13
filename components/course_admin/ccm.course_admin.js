@@ -27,11 +27,16 @@
         'main': {
           'class': 'container-fluid',
           'inner': [
+            {
+              'class': 'mt-3', 'inner': [
+              { 'class': 'row text-info ml-1', 'inner': '<h3>Course ID: %course-id%</h3>' }, { 'tag': 'hr' } ]
+            },
+
             // area for users signed into the course
             {
               'id': 'users', 'class': 'mt-3',
               'inner': [
-                { 'class': 'row text-info ml-1', 'inner': '<h3>Users</h4>' }, { 'tag': 'hr' },
+                { 'class': 'row text-info ml-1', 'inner': '<h3>Users</h3>' }, { 'tag': 'hr' },
                 {
                   'class': 'row text-info p-1 mb-2', 'inner': [
                     { 'class': 'col-2', 'inner': '<h5>Username</h5>' },
@@ -44,7 +49,7 @@
             // area for the course's collections
             {
               'id': 'collections', 'class': 'mt-3',
-              'inner': [ { 'class': 'row text-info ml-1', 'inner': '<h3>Course Collections</h4>' }, { 'tag': 'hr' } ]
+              'inner': [ { 'class': 'row text-info ml-1', 'inner': '<h3>Course Collections</h3>' }, { 'tag': 'hr' } ]
             },
             // area for save button
             {
@@ -142,6 +147,8 @@
 
               let courseInfoClone = $.clone( courseInfo );
               $.setContent( mainDivElem, $.html( self.html.main, {
+                'course-id': self.course_id,
+
                 // handle saving new course info to database
                 'save-click': () => {
                   courseInfoStore.set( courseInfoClone ).then( () => {
