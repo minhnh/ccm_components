@@ -145,6 +145,7 @@
 
         // get question entries and deadlines
         const questionEntries = {};
+        let selectedQuestionIds;
         let ansDeadline = null;
         let rankDeadline = null;
         await self.data.store.get( self.constants.key_questions ).then(
@@ -153,6 +154,7 @@
             if ( questionStore.answer_deadline ) ansDeadline = questionStore.answer_deadline;
             if ( questionStore.ranking_deadline ) rankDeadline = questionStore.ranking_deadline;
             if ( questionStore.entries ) Object.assign( questionEntries, questionStore.entries );
+            selectedQuestionIds = questionStore.selected_ids ? questionStore.selected_ids : [];
           },
           reason => console.log( reason )               // read from question store failed
         ).catch( err => console.log( err ) );   // unhandled exception;
@@ -222,20 +224,17 @@
               if ( !userData.answers ) userData.answers = {};
 
               // load answers from store
-              Object.keys( questionEntries ).forEach( async questionId => {
+              selectedQuestionIds.forEach( async questionId => {
                 qaData[ questionId ] = {};
                 qaData[ questionId ][ 'question' ] = questionEntries[ questionId ];
                 self.data.store.get( self.constants.key_ans_prefix + questionId ).then( async answers => {
-                  if ( !answers ) {
-                    qaData[ questionId ][ 'answers' ] = {};
-                    return;
-                  }
+                  answers = answers ? answers : { 'entries': {} };
                   qaData[ questionId ][ 'answers' ] = answers;
                   // sample answers
                   selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
                   // render ranking entry
                   const docFrag = await renderAnswerRanking( questionId, qaData[ questionId ][ 'question' ],
-                                                      selectedAns, answers[ 'entries' ] );
+                                                             selectedAns, answers[ 'entries' ] );
                   rankingElem.appendChild( docFrag );
                 },
                 reason => console.log( reason )                 // read from data store failed
@@ -257,7 +256,7 @@
 
           // fill the user's ranked answers which are available in 'allAnswers'
           // this ensures updated answers to be resampled, and old ones to be discarded
-          if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ] ) {
+          if ( userData[ 'ranking' ] && questionId in userData[ 'ranking' ] ) {
             for ( rankedAnsKey in userData[ 'ranking' ][ questionId ] ) {
               if ( !( rankedAnsKey in allAnswers ) ) continue;
               const rankIndex = userData[ 'ranking' ][ questionId ][ rankedAnsKey ];
@@ -305,7 +304,7 @@
             if ( Object.keys( selectedAnswers ).length === self.constants.num_answer ) break;
 
             // skip the user's own answers
-            if ( userData[ 'answers' ][ questionId ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
+            if ( questionId in userData[ 'answers' ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
               continue;
 
             // skip if answer is already considered

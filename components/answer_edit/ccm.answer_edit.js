@@ -156,16 +156,19 @@
           .then( ( [ questionData, userData ] ) => {
             if ( !questionData ) questionData = {};
             const deadline = questionData.answer_deadline;
-            questionData.entries && Object.keys( questionData.entries ).forEach( questionId => {
-              qaData[ questionId ] = {};
-              qaData[ questionId ][ 'question' ] = questionData.entries[ questionId ];
+            // use selected questions if defined, otherwise use all questions
+            let questionIds;
+            questionIds = questionData.selected_ids ? questionData.selected_ids : [];
+            questionIds.forEach( qId => {
+              qaData[ qId ] = {};
+              qaData[ qId ][ 'question' ] = questionData.entries[ qId ];
             } );
 
             // create new user data document if not exist
             if ( !userData ) userData = { "answers": {}, "ranking": {} };
             userData.answers && Object.keys( userData.answers ).forEach( questionId => {
               // if no question on record for this answer, skip entry
-              if ( !qaData[ questionId ] ) return;
+              if ( !( questionId in qaData ) ) return;
 
               qaData[ questionId ][ 'answer' ] = userData.answers[ questionId ][ 'text' ];
             } );

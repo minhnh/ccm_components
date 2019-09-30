@@ -203,12 +203,14 @@
 
         // get question entries and deadlines
         const questionEntries = {};
+        let selectedQuestionIds;
         let rankDeadline = null;
         await self.data.store.get( self.constants.key_questions ).then(
           questionStore => {
             if ( !questionStore ) return;
             if ( questionStore.ranking_deadline ) rankDeadline = questionStore.ranking_deadline;
             if ( questionStore.entries ) Object.assign( questionEntries, questionStore.entries );
+            selectedQuestionIds = questionStore.selected_ids ? questionStore.selected_ids : [];
           },
           reason => console.log( reason )               // read from question store failed
         ).catch( err => console.log( err ) );   // unhandled exception;
@@ -248,10 +250,10 @@
           } );
 
           // render questions and their answers, set first question tab and answer panel as active
-          Object.keys( questionEntries ).forEach( ( questionId, index ) => {
+          selectedQuestionIds.forEach( ( questionId, index ) => {
             self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
               if ( !answers || !answers.entries ) {
-                return;
+                answers = { 'entries': {} }
               }
 
               const isActive = ( index === 0 ) ? true : false;
