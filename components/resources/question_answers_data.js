@@ -12,6 +12,8 @@ ccm.files[ 'question_answers_data.js' ] = {
             "51ebe90aeed77259" : "what is robotics?"
         },
 
+        "selected_ids": ["82038a67088dce5f", "51ebe90aeed77259"],
+
         "answer_deadline": null,  // example: { 'date': '2019-01-01', 'time': '23:00' }
 
         "ranking_deadline": null  // same format with 'answer_deadline'
