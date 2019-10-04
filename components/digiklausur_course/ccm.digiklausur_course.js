@@ -28,6 +28,8 @@
 
         'answer_scores': [ 'ccm.component', '../answer_scores/ccm.answer_scores.js' ],
 
+        'course_admin': [ 'ccm.component', '../course_admin/ccm.course_admin.js' ],
+
         'katex': [ 'ccm.component', '../katex/ccm.katex.js' ],
 
         'sortable': [ 'ccm.component', '../sortable/ccm.sortable.js' ],
@@ -71,8 +73,8 @@
               'id': 's-%section_id%-header', 'class': 'card-header bg-info',
               // button link containing the section title
               'inner': [ {
-                'tag': 'button', 'class': 'btn btn-link text-white collapsed', 'data-toggle': 'collapse', 'aria-expanded': 'true',
-                'data-target': '#s-%section_id%-body', 'aria-controls': 's-%section_id%-body',
+                'tag': 'button', 'class': 'btn btn-link text-white collapsed', 'data-toggle': 'collapse',
+                'aria-expanded': 'true',  'data-target': '#s-%section_id%-body', 'aria-controls': 's-%section_id%-body',
                 'inner': '<h5 class=\"mb-0\">%section-title%</h5>', 'id': 's-%section_id%-button'
               } ]
             },
@@ -121,6 +123,7 @@
                         'onclick': '%home-click%'
                       } ]
                     },
+
                     // Help button
                     {
                       'tag': 'li', 'class': 'nav-item',
@@ -158,9 +161,9 @@
 
         'user_info': {
           'tag': 'li', 'class': 'nav-item text-white pt-1', 'inner': [
-            { 'tag': 'i', 'class': 'fa fa-user pr-1' },
-            { 'tag': 'span', 'id': 'username', 'inner': '%username%', 'class': 'p-1' },
-            { 'tag': 'span', 'id': 'user-role', 'inner': '(%role%)', 'class': 'pr-2' }
+            { 'tag': 'i', 'class': 'fa fa-user p-1' },
+            { 'tag': 'span', 'id': 'username', 'class': 'p-1', 'inner': '%username%' },
+            { 'tag': 'a', 'id': 'user-role', 'class': 'p-1 badge-info', 'inner': '(%role%)', 'onclick': '%click%' }
           ]
         },
 
@@ -274,7 +277,7 @@
             return getUserInfo().then(
               userInfo => {
                 renderLoggedInNav( loginArea, userInfo );
-                return true;
+                return userInfo;
               },
               () => {
                 renderLoggedOutNav( loginArea );
@@ -310,7 +313,18 @@
           while ( rootElem.firstChild ) { rootElem.removeChild( rootElem.firstChild ); }
 
           // add user info and 'Sign Out' button
-          const userInfoElem = $.html( self.html.user_info, userInfo );
+          const userInfoElem = $.html( self.html.user_info, {
+            'username': userInfo.username, 'role': userInfo.role,
+            'click': () => {
+              // only allow the course admin view for 'admin' users
+              if ( userInfo.role !== 'admin' ) return;
+              self.components.course_admin.start( {
+                'root': article, 'js': self.js, 'css': self.css, 'user_realm': self.user_realm,
+                'components': self.components, 'course_id': courseId, 'store_url': storeUrl
+              } );
+            }
+          } );
+
           const signOutBtn = $.html( self.html.login_button, {
             'label': 'Sign Out', 'click': async () => {
               self.user && await self.user.logout().then ( () => {
