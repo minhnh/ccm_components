@@ -33,7 +33,7 @@
           'class': 'row p-0',
           'inner': [
             { 'id': 'math-edit' },
-            { 'id': 'math-render', 'class': 'pl-4 col' }
+            { 'id': 'math-render', 'class': 'pl-4 pt-2 col' }
           ]
         },
 

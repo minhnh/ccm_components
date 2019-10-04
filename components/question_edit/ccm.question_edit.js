@@ -138,7 +138,18 @@
           ]
         },  // end question_entry
 
-        'selected_question_entry': { 'class': 'p-1 text-secondary', 'id': 'q_selected_%question_id%' },
+        'selected_question_entry': {
+          'class': 'input-group text-secondary', 'id': 'q_selected_%question_id%', 'inner': [
+            { // question label
+              'tag': 'span', 'class': 'input-group-prepend col-1',
+              'id': 'q_selected_%question_id%_label', 'inner': 'Question %question-num%:',
+            },
+            // question input
+            {
+              'class': 'col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
+              'aria-describedby': 'q_selected_%question_id%_label', 'id': 'q_selected_%question_id%_text'
+            }
+          ] },
 
         // alert message
         'alert_message': { 'tag': 'span', 'class': 'alert alert-light text-%message-type%', 'inner': '%message-text%' },
@@ -346,10 +357,13 @@
           // select a subset of questions for students
           sampleQuestionSubset( answerCounts );
           selectedQuestionsElem.innerHTML = '';
-          selectedIds.forEach( selId => {
-            const selQElem =  $.html( self.html.selected_question_entry, { 'question_id': selId } );
+          selectedIds.forEach( ( selId, index ) => {
+            const selQElem = $.html( self.html.selected_question_entry, {
+              'question_id': selId, 'question-num': index + 1
+            } );
+            const selQTextElem = selQElem.querySelector( '#q_selected_' + selId + '_text' )
             self.components.katex.start( {
-              root: selQElem, "css": self.css, "js": self.js, 'editable': false,
+              root: selQTextElem, "css": self.css, "js": self.js, 'editable': false,
               data: { 'id': selId, 'text': questionData[ selId ] }
             } );
             selectedQuestionsElem.appendChild( selQElem );

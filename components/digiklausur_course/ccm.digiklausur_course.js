@@ -152,7 +152,7 @@
         },
 
         'login_button': {
-          'tag': 'li', 'class': 'nav-item',
+          'tag': 'li', 'class': 'nav-item pl-1',
           'inner': {
             'tag': 'button', 'type': 'button', 'class': 'btn btn-light',
             'inner': '%label%', 'onclick': '%click%'

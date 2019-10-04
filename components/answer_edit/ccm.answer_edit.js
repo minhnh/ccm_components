@@ -66,20 +66,20 @@
             {
               'class': 'input-group m-1 row', 'inner': [
                 {
-                  'class': 'input-group-prepend text-secondary p-1 col-0 mr-3', 'tag': 'label', 'inner': 'Question',
-                  'for': 'q_%question_id%_question'
+                  'class': 'input-group-prepend input-group-text text-secondary pl-2 col mr-3', 'tag': 'label',
+                  'inner': 'Question %question_num%:', 'for': 'q_%question_id%_question'
                 },
-                { 'class': 'p-1 text-info col-11', 'id': 'q_%question_id%_question' }
+                { 'class': 'p-0 text-info col-11', 'id': 'q_%question_id%_question' }
               ]
             },
             // answer label and text box
             {
               'class': 'input-group m-1 mb-3 row', 'inner': [
                 {
-                  'class': 'input-group-prepend input-group-text col-0 mr-3', 'tag': 'label',
+                  'class': 'input-group-prepend input-group-text text-secondary pl-2 col', 'tag': 'label',
                   'for': 'q_%question_id%_answer', 'inner': 'Answer'
                 },
-                { 'class': 'p-0 col-11', 'id': 'q_%question_id%_answer' }
+                { 'class': 'p-0 col-11 ml-3', 'id': 'q_%question_id%_answer' }
               ]
             }
           ],
@@ -175,7 +175,7 @@
 
             renderContent( mainDivElem, qaData, username );
             renderDeadlineTimer( mainDivElem, deadline );
-            renderQAPairs( mainDivElem, qaData, deadline );
+            renderQAPairs( mainDivElem, questionIds, qaData, deadline );
 
           } )
           .catch( exception => {
@@ -223,7 +223,7 @@
           } );
         }  // end renderDeadlineTimer
 
-        function renderQAPairs( rootElem, qaData, deadline ) {
+        function renderQAPairs( rootElem, questionIds, qaData, deadline ) {
           const contentElem = rootElem.querySelector( '#content' );
           let allowEdit = true;
           if ( deadline ) {
@@ -231,11 +231,11 @@
             if ( dlObj - new Date() < 0 ) allowEdit = false;
           }
 
-          Object.keys( qaData ).forEach( ( questionId ) => {
+          questionIds.forEach( ( questionId, index ) => {
             const answerText = qaData[ questionId ].answer ? qaData[ questionId ].answer : '';
             const questionText = qaData[ questionId ].question ? qaData[ questionId ].question : '';
 
-            const qaDiv = $.html( self.html.qa_entry, { 'question_id': questionId } );
+            const qaDiv = $.html( self.html.qa_entry, { 'question_id': questionId, 'question_num': index + 1 } );
 
             // create non-editable katex instance for question
             const questionTextArea = qaDiv.querySelector( `#q_${ questionId }_question` );
