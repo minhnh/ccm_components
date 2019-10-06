@@ -23,6 +23,10 @@
 
       "data": { "store": [ "ccm.store" ] },
 
+      "initial_questions": [ "ccm.store" ],
+
+      "max_question_num": 15,           // max number of questions to be selected for students to answer
+
       // predefined strings
       "constants" : {
         "key_questions": "questions",   // key of store document containing question entries
@@ -38,8 +42,8 @@
               'id': 'answer-deadline', 'class': 'input-group mb-1',
               'inner': [
                 {
-                  'class': 'input-group-prepend',
-                  'inner': '<span class="input-group-text pr-3">Answer Deadline</span>'
+                  'class': 'input-group-prepend pl-1',
+                  'inner': [ { "tag": "span", "class": "input-group-text", "inner": "Answer Deadline" } ]
                 },
                 {
                   'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'ans_dl_date',
@@ -58,7 +62,7 @@
               'inner': [
                 {
                   'class': 'input-group-prepend',
-                  'inner': '<span class="input-group-text">Ranking Deadline</span>'
+                  'inner': [ { "tag": "span", "class": "input-group-text", "inner": "Ranking Deadline" } ]
                 },
                 {
                   'tag': 'input', 'type': 'date', 'class': 'form-control col-2', 'name': 'rank_dl_date',
@@ -72,7 +76,19 @@
               ]
             },
 
+            // HTML area where selected questions will be rendered
+            { 'class': 'row text-info ml-1', 'inner': '<h4>Selected Questions</h4>' }, { 'tag': 'hr' },
+
+            { 'id': 'selected-questions', "class": "mb-3" },
+
             // HTML area where questions will be rendered
+            { 'class': 'row text-info ml-1', 'inner': '<h4>All Questions</h4>' }, { 'tag': 'hr' },
+
+            // Counter for number of questions
+            {
+              "class": "text-info mb-3", "inner": 'Number of questions: <span id="question-num"></span>'
+            },
+
             { 'id': 'questions' },
 
             // HTML layout for a button to add new questions
@@ -121,6 +137,19 @@
             }
           ]
         },  // end question_entry
+
+        'selected_question_entry': {
+          'class': 'input-group text-secondary', 'id': 'q_selected_%question_id%', 'inner': [
+            { // question label
+              'tag': 'span', 'class': 'input-group-prepend col-1',
+              'id': 'q_selected_%question_id%_label', 'inner': 'Question %question-num%:',
+            },
+            // question input
+            {
+              'class': 'col-8', 'aria-label': 'Question', 'style': 'overflow: auto;',
+              'aria-describedby': 'q_selected_%question_id%_label', 'id': 'q_selected_%question_id%_text'
+            }
+          ] },
 
         // alert message
         'alert_message': { 'tag': 'span', 'class': 'alert alert-light text-%message-type%', 'inner': '%message-text%' },
@@ -198,6 +227,7 @@
         // render main HTML structure
         const emptyQuestionId = getQuestionId( '' );
         let questionData = {};
+        let selectedIds;
         let questionElements = {};
         let ansDeadline;
         let rankDeadline;
@@ -206,7 +236,7 @@
           // handle adding new questions
           'add-question-click': async () => {
 
-            if ( questionData[ emptyQuestionId ] ) return;
+            if ( emptyQuestionId in questionData ) return;
 
             questionData[ emptyQuestionId ] = '';
             renderQuestions();
@@ -245,7 +275,7 @@
 
             await self.data.store.set( {
               // new question data
-              'key': self.constants.key_questions, 'entries': questionData,
+              'key': self.constants.key_questions, 'entries': questionData, 'selected_ids': selectedIds,
               'answer_deadline': ansDeadline, 'ranking_deadline': rankDeadline
             } ) .then ( () => {       // successful update
                 const notificationSpan = mainDivElem.querySelector( '#save-notification' );
@@ -263,6 +293,7 @@
         .then(
           qStoreData => {
             Object.assign( questionData, qStoreData && qStoreData.entries ? qStoreData.entries : {} );
+            selectedIds = qStoreData.selected_ids ? qStoreData.selected_ids : [];
 
             // set deadline date & time for answering questions
             if ( qStoreData && qStoreData.answer_deadline ) {
@@ -287,8 +318,14 @@
             const rankTimeInput = mainDivElem.querySelector( '#rank-dl-time' );
             rankTimeInput.setAttribute( 'value', rankDeadline.time );
 
-            // render questions
-            renderQuestions();
+            // if initial questions are specified, fill questionData
+            self.initial_questions.get( 'questions' ).then(
+              initQuestions => {
+                initQuestions && initQuestions.forEach( qText => {
+                  questionData[ getQuestionId( qText ) ] = qText;
+                } );
+              }
+            ).then( () => renderQuestions() );
           },
           reason => {   // read questions failed
             console.log( reason.error );
@@ -299,13 +336,37 @@
 
         function renderQuestions() {
           const questionsElem = mainDivElem.querySelector( '#questions' );
+          const questionNumElem = mainDivElem.querySelector( "#question-num" );
+          const selectedQuestionsElem = mainDivElem.querySelector( '#selected-questions' );
+          let numQuestions = 0;
+          const answerCounts = {};
+
           questionsElem.innerHTML = '';
           Object.keys( questionData ).forEach( questionId => {
-            if ( !questionElements[ questionId ] ) {
-              const question = questionData[ questionId ];
-              questionElements[ questionId ] = renderQuestionDiv( questionId, question ? question : '' );
+            numQuestions++;
+            if ( !( questionId in questionElements ) ) {
+              const questionTxt = questionData[ questionId ];
+              questionElements[ questionId ] = renderQuestionDiv( questionId, questionTxt );
             }
             questionsElem.appendChild( questionElements[ questionId ] );
+            // TODO: get 'ans_count' from database
+            answerCounts[ questionId ] = 0;
+          } );
+          questionNumElem.innerHTML = numQuestions;
+
+          // select a subset of questions for students
+          sampleQuestionSubset( answerCounts );
+          selectedQuestionsElem.innerHTML = '';
+          selectedIds.forEach( ( selId, index ) => {
+            const selQElem = $.html( self.html.selected_question_entry, {
+              'question_id': selId, 'question-num': index + 1
+            } );
+            const selQTextElem = selQElem.querySelector( '#q_selected_' + selId + '_text' )
+            self.components.katex.start( {
+              root: selQTextElem, "css": self.css, "js": self.js, 'editable': false,
+              data: { 'id': selId, 'text': questionData[ selId ] }
+            } );
+            selectedQuestionsElem.appendChild( selQElem );
           } );
         }
 
@@ -317,6 +378,7 @@
             // handle removing a question
             'click': async () => {
               delete questionData[ questionId ];
+              delete questionElements[ questionId ];
               renderQuestions();
             }
           } );
@@ -327,21 +389,51 @@
             root: qTextArea, "css": self.css, "js": self.js,
             data: { 'id': questionId, 'text': questionText },
             onchange: ( newQuestion ) => {
+              const questionIdClone = $.clone( questionId );
               const newQuestionId = getQuestionId( newQuestion );
               // make no changes if the question value has not changed
-              if ( newQuestionId == questionId ) return;
+              if ( newQuestionId == questionIdClone ) return;
 
               // else update 'questionElements' and 'questionData'
               questionData[ newQuestionId ] = newQuestion;
               questionElements[ newQuestionId ] = questionDiv;
-              delete questionData[ questionId ];
-              delete questionElements[ questionId ];
+              delete questionData[ questionIdClone ];
+              delete questionElements[ questionIdClone ];
             }
           } );
 
           // qTextArea.value = questionText;
           return questionDiv;
         }  // end renderQuestionDiv()
+
+        function sampleQuestionSubset( answerCounts ) {
+          let allQIds = Object.keys( answerCounts );
+
+          // ensure all selected keys exist
+          selectedIds.forEach( selId => {
+            if ( selId in answerCounts ) {
+              // remove entry from possible questions to be sampled and selected
+              const qIndex = allQIds.indexOf( selId );
+              if ( qIndex > -1 ) allQIds.splice( qIndex, 1 );
+              return;
+            }
+            // remove key if not exist in 'questionData', check if 'indexOf' returns -1 when 'selId' is not found
+            var index = selectedIds.indexOf( selId );
+            if ( index > -1 ) selectedIds.splice( index, 1 );
+          } );
+
+          // randomly select questions from the remaining ID's
+          while ( selectedIds.length < self.max_question_num ) {
+            // if no more questions to sample
+            if ( allQIds.length == 0 ) break;
+            // sample a random question
+            // TODO: need to take into account the number of answers for each question
+            const randIndex = Math.floor( Math.random() * allQIds.length );
+            // add to 'selectedIds' & remove from 'allQIds'
+            selectedIds.push( allQIds[ randIndex ] );
+            allQIds.splice( randIndex, 1 );
+          }
+        }  // end selectQuestions()
 
         function getNextDay( date ) {
           // get the next day, at current time

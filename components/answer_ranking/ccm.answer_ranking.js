@@ -56,15 +56,17 @@
         // HTML config for a question and answers
         'rank_entry': {
           'inner': [
+            // question label and text
             {
-              'class': 'input-group m-1 row', 'inner': [
+              'class': 'input-group  m-1 mb-2 row', 'inner': [
                 {
-                  'class': 'input-group-prepend text-secondary p-1 col-0 mr-3', 'tag': 'label', 'inner': 'Question',
-                  'for': 'q_%question_id%'
+                  'class': 'input-group-prepend text-secondary pl-2 col mr-3 mt-2', 'tag': 'label',
+                  'inner': 'Question %question_num%:', 'for': 'q_%question_id%'
                 },
-                { 'class': 'p-1 text-info col-11', 'id': 'q_%question_id%' }
+                { 'class': 'p-0 text-info col-11', 'id': 'q_%question_id%' }
               ]
             },
+            // answers to be ranked
             { 'id': 'answers', 'class': 'mb-4 ml-2' }
           ]
         },  // end 'rank_entry'
@@ -145,6 +147,7 @@
 
         // get question entries and deadlines
         const questionEntries = {};
+        let selectedQuestionIds;
         let ansDeadline = null;
         let rankDeadline = null;
         await self.data.store.get( self.constants.key_questions ).then(
@@ -153,6 +156,7 @@
             if ( questionStore.answer_deadline ) ansDeadline = questionStore.answer_deadline;
             if ( questionStore.ranking_deadline ) rankDeadline = questionStore.ranking_deadline;
             if ( questionStore.entries ) Object.assign( questionEntries, questionStore.entries );
+            selectedQuestionIds = questionStore.selected_ids ? questionStore.selected_ids : [];
           },
           reason => console.log( reason )               // read from question store failed
         ).catch( err => console.log( err ) );   // unhandled exception;
@@ -215,30 +219,38 @@
           } );
 
           // load user data
-          self.data.store.get( username ).then( async ud => {
+          self.data.store.get( username ).then( ud => {
               userData = ud;
               if ( !userData ) userData = { key : username, answers: {}, ranking: {} };
               if ( !userData.ranking ) userData.ranking = {};
               if ( !userData.answers ) userData.answers = {};
 
               // load answers from store
-              Object.keys( questionEntries ).forEach( async questionId => {
+              const entryDict = {};
+              selectedQuestionIds.forEach( ( questionId, index ) => {
+                // create placeholder document fragment to fill answer entries after async data queries complete
+                const entryDiv = document.createElement( 'div' );
+                entryDict[ questionId ] = entryDiv;
+                rankingElem.appendChild( entryDiv );
+
+                // setup entry for question
                 qaData[ questionId ] = {};
                 qaData[ questionId ][ 'question' ] = questionEntries[ questionId ];
-                self.data.store.get( self.constants.key_ans_prefix + questionId ).then( async answers => {
-                  if ( !answers ) {
-                    qaData[ questionId ][ 'answers' ] = {};
-                    return;
-                  }
-                  qaData[ questionId ][ 'answers' ] = answers;
-                  // sample answers
-                  selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
-                  // render ranking entry
-                  const docFrag = await renderAnswerRanking( questionId, qaData[ questionId ][ 'question' ],
-                                                      selectedAns, answers[ 'entries' ] );
-                  rankingElem.appendChild( docFrag );
-                },
-                reason => console.log( reason )                 // read from data store failed
+
+                // get answers
+                self.data.store.get( self.constants.key_ans_prefix + questionId )
+                .then(
+                  answers => {
+                    answers = answers ? answers : { 'entries': {} };
+                    qaData[ questionId ][ 'answers' ] = answers;
+                    // sample answers
+                    selectedAns = getAnswers( userData, questionId, answers[ 'entries' ] );
+                    // render ranking entry
+                    const rankEntryElem = renderAnswerRanking( index, questionId, qaData[ questionId ][ 'question' ],
+                                                              selectedAns, answers[ 'entries' ] );
+                    entryDict[ questionId ].appendChild( rankEntryElem );
+                  },
+                  reason => console.log( reason )                 // read from data store failed
                 ).catch( err => console.log( err.message ) );   // unhandled exception
               } );
             },
@@ -257,7 +269,7 @@
 
           // fill the user's ranked answers which are available in 'allAnswers'
           // this ensures updated answers to be resampled, and old ones to be discarded
-          if ( userData[ 'ranking' ] && userData[ 'ranking' ][ questionId ] ) {
+          if ( userData[ 'ranking' ] && questionId in userData[ 'ranking' ] ) {
             for ( rankedAnsKey in userData[ 'ranking' ][ questionId ] ) {
               if ( !( rankedAnsKey in allAnswers ) ) continue;
               const rankIndex = userData[ 'ranking' ][ questionId ][ rankedAnsKey ];
@@ -305,7 +317,7 @@
             if ( Object.keys( selectedAnswers ).length === self.constants.num_answer ) break;
 
             // skip the user's own answers
-            if ( userData[ 'answers' ][ questionId ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
+            if ( questionId in userData[ 'answers' ] && ansKey === userData[ 'answers' ][ questionId ][ 'hash' ] )
               continue;
 
             // skip if answer is already considered
@@ -334,8 +346,10 @@
 
         }  // end sortAnswersByRankCount()
 
-        async function renderAnswerRanking( questionId, questionText, selectedAnswers, allAnswers ) {
-          const qaRankingEntry = $.html( self.html.rank_entry, { 'question_id': questionId } );
+        function renderAnswerRanking( questionIndex, questionId, questionText, selectedAnswers, allAnswers ) {
+          const qaRankingEntry = $.html( self.html.rank_entry, {
+            'question_id': questionId, 'question_num': questionIndex + 1
+          } );
 
           // start katex component to render equations in questions
           const questionTextArea = qaRankingEntry.querySelector( `#q_${ questionId }` );
@@ -363,7 +377,7 @@
                 'content': allAnswers[ ansId ][ 'text' ]
               };
             }
-            sortableObjects[ questionId ] = await self.components.sortable.start( {
+            sortableObjects[ questionId ] = self.components.sortable.start( {
               root: answersDiv, 'css': self.css, 'js': self.js, 'components': self.components,
               data: { 'id': questionId + '_answers', 'items': answerEntries }
             } );
