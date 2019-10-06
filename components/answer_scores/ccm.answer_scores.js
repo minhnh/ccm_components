@@ -251,26 +251,28 @@
 
           // render questions and their answers, set first question tab and answer panel as active
           selectedQuestionIds.forEach( ( questionId, index ) => {
-            self.data.store.get( self.constants.key_ans_prefix + questionId ).then( answers => {
-              if ( !answers || !answers.entries ) {
-                answers = { 'entries': {} }
-              }
+            const isActive = ( index === 0 ) ? true : false;
+            isQuestionSelected[ questionId ] = isActive;
+            // add question tab and answer panel
+            questionTabsDiv.appendChild(
+              getQuestionTab( questionTabsDiv, answerPanelDiv, index, questionId,
+                              questionEntries[ questionId ], isActive )
+            );
 
-              const isActive = ( index === 0 ) ? true : false;
-              isQuestionSelected[ questionId ] = isActive;
-
-              // add question tab and answer panel
-              questionTabsDiv.appendChild( getQuestionTab( questionTabsDiv, answerPanelDiv, questionId,
-                                                            questionEntries[ questionId ], isActive )
-              );
-              answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive, showUsername ) );
-            },
-            reason => console.log( 'get answers rejected: ' + reason )
+            self.data.store.get( self.constants.key_ans_prefix + questionId )
+            .then(
+              answers => {
+                if ( !answers || !answers.entries ) {
+                  answers = { 'entries': {} }
+                }
+                answerPanelDiv.appendChild( getAnswerPanel( questionId, answers.entries, isActive, showUsername ) );
+              },
+              reason => console.log( 'get answers rejected: ' + reason )
             ).catch( err => console.log( 'get answers failed: ' + err ) );
           } );
         }  // end renderContent()
 
-        function getQuestionTab( questionTabsElem, ansPanelsElem, questionId, questionText, isActive ) {
+        function getQuestionTab( questionTabsElem, ansPanelsElem, questionIndex, questionId, questionText, isActive ) {
           const questionTab = $.html( self.html.question_tab, {
             'question_id': questionId,
 
@@ -309,7 +311,7 @@
           // start a katex instance to render equations in the question
           self.components.katex.start( {
             root: questionTab, "css": self.css, "js": self.js, 'editable': false,
-            data: { 'id': 'content_' + questionId, 'text': questionText }
+            data: { 'id': 'content_' + questionId, 'text': `(${ questionIndex + 1 }) ${ questionText }` }
           } );
 
           setQuestionTabActive( questionTab, isActive );
