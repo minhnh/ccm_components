@@ -39,7 +39,7 @@
 
       "user_realm": "hbrsinfkaul", 'user': null,
 
-      'dataset': [ 'ccm.store', 'resources/dataset.js' ],
+      'dataset': [ 'ccm.load', 'resources/dataset.js' ],
 
       'css': {
         'bootstrap': '../../lib/css/bootstrap.min.css',
@@ -55,122 +55,7 @@
         'jquery': '../../lib/js/jquery-3.3.1.slim.min.js'
       },
 
-      'html': {
-        'main': {
-          'inner': [
-            { 'id': 'header' },
-            { 'id': 'article', 'class': 'p-2' },
-            { 'id': 'feedback' },
-            { 'id': 'footer' }
-          ]
-        },
-
-        // HTML configuration for accordion-style section menu
-        'section': {
-          'class': 'card', 'id': 's-%section_id%',
-          'inner': [
-            {
-              'id': 's-%section_id%-header', 'class': 'card-header bg-info',
-              // button link containing the section title
-              'inner': [ {
-                'tag': 'button', 'class': 'btn btn-link text-white collapsed', 'data-toggle': 'collapse',
-                'aria-expanded': 'true',  'data-target': '#s-%section_id%-body', 'aria-controls': 's-%section_id%-body',
-                'inner': '<h5 class=\"mb-0\">%section-title%</h5>', 'id': 's-%section_id%-button'
-              } ]
-            },
-            {
-              'id': 's-%section_id%-body', 'class': 'collapse',
-              'aria-labelledby': 's-%section_id%-header',
-              'inner': [ { 'id': 's-%section_id%-body-content', 'class': 'card-body' } ]
-            }
-          ]
-        },
-
-        'navigation': {
-          'tag': 'nav',
-          'class': 'navbar navbar-expand-md navbar-dark bg-info pb-2',
-          'id': 'navigation-bar',
-          'inner': [
-            // navbar brand
-            {
-              'tag': 'a', 'class': "navbar-brand", 'href': "#", 'id': "course-name",
-              'onclick': '%course-name-click%', 'inner': '%course-name%'
-            },
-
-            // collapsible button for when screen width is small
-            {
-              'tag': 'button', 'class': 'navbar-toggler', 'type': 'button', 'data-toggle': 'collapse',
-              'data-target': '#navbarSupportedContent', 'aria-controls': 'navbarSupportedContent',
-              'aria-expanded': 'false', 'aria-label': 'Toggle navigation',
-              'inner': [ { 'tag': 'span', 'class': 'navbar-toggler-icon' } ]
-            },
-
-            // collapsible content div
-            {
-              'class': 'collapse navbar-collapse',
-              'id': 'navbarSupportedContent',
-              'inner': [
-                // left side navigation buttons
-                {
-                  'tag': 'ul', 'class': 'navbar-nav mr-auto',
-                  'inner': [
-                    // Home button
-                    {
-                      'tag': 'li', 'class': 'nav-item active',
-                      'inner': [ {
-                        'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Home', 'id': 'home',
-                        'inner': '<i class="fa fa-home"></i><span class="sr-only">Home</span>',
-                        'onclick': '%home-click%'
-                      } ]
-                    },
-
-                    // Help button
-                    {
-                      'tag': 'li', 'class': 'nav-item',
-                      'inner': [ {
-                        'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Help', 'id': 'help',
-                        'inner': '<i class="fa fa-info-circle"></i><span class="sr-only">Help</span>'
-                      } ]
-                    }
-                  ]
-                },
-                // username field and login/logout buttons to the right
-                { 'tag': 'ul', 'class': 'navbar-nav', 'id': 'login-area' }
-              ]
-            }  // end navbar collapsible content
-          ]
-        },  // end navigation HTML definition
-
-        // HTML configuration for each menu entry
-        'entry': {
-          'inner': [
-            // fontawesome icon
-            { 'tag': 'span', 'inner': [ { 'tag': 'i', 'class': 'fa %icon% text-info' } ] },
-            // button link that load entry content
-            { 'tag': 'button', 'class': 'btn btn-link', 'type': 'button', 'inner': '%title%', 'onclick': '%click%' }
-          ]
-        },
-
-        'login_button': {
-          'tag': 'li', 'class': 'nav-item pl-1',
-          'inner': {
-            'tag': 'button', 'type': 'button', 'class': 'btn btn-light',
-            'inner': '%label%', 'onclick': '%click%'
-          }
-        },
-
-        'user_info': {
-          'tag': 'li', 'class': 'nav-item text-white pt-1', 'inner': [
-            { 'tag': 'i', 'class': 'fa fa-user p-1' },
-            { 'tag': 'span', 'id': 'username', 'class': 'p-1', 'inner': '%username%' },
-            { 'tag': 'a', 'id': 'user-role', 'class': 'p-1 badge-info', 'inner': '(%role%)', 'onclick': '%click%' }
-          ]
-        },
-
-        // message to display when user is not logged in
-        'alert_message': { 'class': 'alert alert-%type%', 'role': 'alert', 'inner': '%message%\n' }
-
-      },  // end HTML configurations
+      'html': [ 'ccm.load', 'resources/html.js' ],  // end HTML configurations
 
       // icon class name for each entry type
       'entry_icons': {
@@ -195,8 +80,8 @@
 
       this.start = async () => {
         let courseInfoStore;
-        let storeUrl;
-        let courseId;
+        let storeUrl = self.dataset.store_url;
+        let courseId = self.dataset.course_id;
 
         // load HTML configuration and query for main elements
         const main = $.html( self.html.main );
@@ -219,31 +104,9 @@
           "realm": self.user_realm
         } );
 
-        Promise.all( [
-          self.dataset.get( 'course_name' ),
-          self.dataset.get( 'course_id' ),
-          self.dataset.get( 'store_url' ) ] )
-        .then( async ( [ pCourseName, pCourseId, pStoreUrl ] ) => {
-          document.title = pCourseName;
-          courseId = pCourseId;
-          storeUrl = pStoreUrl;
-
-          await self.ccm.store( {
-            'name': 'courses#' + courseId, 'url': storeUrl, 'parent': self, 'method': 'POST'
-          } )
-          .then(
-            infoStore => { courseInfoStore = infoStore; }
-          );
-          setupNavigation( pCourseName )
-          .then(
-            () => renderArticle( 'home' ),
-            reason => {
-              $.setContent( article, $.html( self.html.alert_message, {
-                'type': 'warning', 'message': reason
-              } ) );
-            }
-          );
-        } )
+        document.title = self.dataset.course_name;
+        await self.ccm.store( { 'name': 'courses#' + courseId, 'url': storeUrl, 'parent': self, 'method': 'POST' } )
+        .then ( infoStore => { courseInfoStore = infoStore; } )
         .catch( exception => {
           console.log( exception );
           $.setContent( article,
@@ -251,6 +114,15 @@
               'type': 'danger', 'message': 'Reading course information failed.'
             } ) );
         } );
+        setupNavigation( self.dataset.course_name )
+        .then(
+          () => renderArticle( 'home' ),
+          reason => {
+            $.setContent( article, $.html( self.html.alert_message, {
+              'type': 'warning', 'message': reason
+            } ) );
+          }
+        );
 
         /********************
          * FUNCTIONS
@@ -260,10 +132,23 @@
          * @param {String} courseName
          */
         async function setupNavigation( courseName ) {
-          header.appendChild( $.html( self.html.navigation, {
+          header.appendChild( $.html( self.html.navigation , {
             'course-name': courseName,
-            'course-name-click': () => { renderArticle( 'home' ) },
-            'home-click': () => { renderArticle( 'home' ) }
+            'course-name-click': () => renderArticle( 'home' ),
+            'home-click': () => {
+              const homeNavItem = header.querySelector( '#home' );
+              const helpNavItem = header.querySelector( '#help' );
+              if ( !homeNavItem.classList.contains( 'active' ) ) homeNavItem.classList.add( 'active' );
+              helpNavItem.classList.remove( 'active' );
+              renderArticle( 'home' )
+            },
+            'help-click': () => {
+              const homeNavItem = header.querySelector( '#home' );
+              const helpNavItem = header.querySelector( '#help' );
+              if ( !helpNavItem.classList.contains( 'active' ) ) helpNavItem.classList.add( 'active' );
+              homeNavItem.classList.remove( 'active' );
+              renderArticle( 'help' )
+            }
           } ) );
 
           // setup toggle button
@@ -372,6 +257,11 @@
           }
 
           switch ( pageName ) {
+            case 'help':
+              self.dataset.help_menu && self.ccm.load( self.dataset.help_menu.html )
+              .then( result => { return $.setContent( article, $.html( result ) );} )
+              .catch( exception => console.log( exception ) );
+              break;
             case 'home':
             default:
               renderHome();
@@ -383,29 +273,26 @@
           // clear the 'article' element
           while ( article.firstChild ) { article.removeChild( article.firstChild ); }
 
-          self.dataset.get( 'home_menu' ).then(
-            result => {
-              result.sections.forEach( section => {
-                const sectionElem = $.html( self.html.section, {
-                  'section_id': section.id, 'section-title': section.title
-                } );
-                const sectionContent = sectionElem.querySelector( '#s-' + section.id + '-body-content' );
-                const sectionBtn = sectionElem.querySelector( '#s-' + section.id + '-header' );
+          self.dataset.home_menu.sections.forEach( section => {
+            const sectionElem = $.html( self.html.section, {
+              'section_id': section.id, 'section-title': section.title
+            } );
+            const sectionContent = sectionElem.querySelector( '#s-' + section.id + '-body-content' );
+            const sectionBtn = sectionElem.querySelector( '#s-' + section.id + '-header' );
 
-                // toggle visibility of the section and its content
-                sectionBtn.addEventListener( 'click', async event => {
-                  event.srcElement.classList.toggle( 'collapsed' );
-                  sectionContent.parentElement.classList.toggle( 'show' );
-                } );
+            // toggle visibility of the section and its content
+            sectionBtn.addEventListener( 'click', async event => {
+              event.srcElement.classList.toggle( 'collapsed' );
+              sectionContent.parentElement.classList.toggle( 'show' );
+            } );
 
-                // render menu entries for the section
-                section.entries.forEach( entryConfig => {
-                  sectionContent.appendChild( renderMenuEntry( entryConfig ) )
-                } );
+            // render menu entries for the section
+            section.entries.forEach( entryConfig => {
+              sectionContent.appendChild( renderMenuEntry( entryConfig ) )
+            } );
 
-                article.appendChild( sectionElem );
-              });
-            });
+            article.appendChild( sectionElem );
+          } );
         }  // end renderHome()
 
         function renderMenuEntry( entryConfig ) {

@@ -29,5 +29,10 @@ ccm.files[ 'dataset.js' ] = {
         ]
       }
     ]
+  },
+
+  "help_menu": {
+    "key": "help_menu",
+    "html": "../../components/digiklausur_course/resources/help.js"
   }
 };

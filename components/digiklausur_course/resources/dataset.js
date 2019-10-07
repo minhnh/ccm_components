@@ -41,5 +41,10 @@ ccm.files[ "dataset.js" ] = {
         ]
       }
     ]
+  },
+
+  "help_menu": {
+    "key": "help_menu",
+    "html": "resources/help.js"
   }
 };
