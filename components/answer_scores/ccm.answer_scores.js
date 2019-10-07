@@ -81,7 +81,11 @@
         // HTML configs for the control element which display a question
         'question_tab': {
           'id': 'q_%question_id%', 'data-toggle': "list", 'role': 'tab',
-          'href': '#a_%question_id%', 'aria-controls': 'a_%question_id%', 'onclick': '%click%'
+          'href': '#a_%question_id%', 'aria-controls': 'a_%question_id%', 'onclick': '%click%',
+          'inner': [
+            { 'tag': 'span', 'class': "badge badge-light col", 'inner': 'Question %question_num%' },
+            { 'tag': 'span', 'class': 'col', 'id': 'questionTabContent' }
+          ]
         },  // end question_tab
 
         // HTML configs for the answer panel to display when a question tab is clicked
@@ -276,6 +280,8 @@
           const questionTab = $.html( self.html.question_tab, {
             'question_id': questionId,
 
+            'question_num': questionIndex + 1,
+
             // handler for when a question menu is clicked
             'click': event => {
               event.preventDefault();
@@ -309,9 +315,10 @@
           } );  // end $.html()
 
           // start a katex instance to render equations in the question
+          const qContent = questionTab.querySelector( '#questionTabContent' );
           self.components.katex.start( {
-            root: questionTab, "css": self.css, "js": self.js, 'editable': false,
-            data: { 'id': 'content_' + questionId, 'text': `(${ questionIndex + 1 }) ${ questionText }` }
+            root: qContent, "css": self.css, "js": self.js, 'editable': false,
+            data: { 'id': 'content_' + questionId, 'text': `${ questionText }` }
           } );
 
           setQuestionTabActive( questionTab, isActive );
