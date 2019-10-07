@@ -39,9 +39,9 @@ ccm.files[ "html.js" ] = {
             'inner': [
               // Home button
               {
-                'tag': 'li', 'class': 'nav-item active',
+                'tag': 'li', 'class': 'nav-item active', 'id': 'home',
                 'inner': [ {
-                  'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Home', 'id': 'home',
+                  'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Home',
                   'inner': '<i class="fa fa-home"></i><span class="sr-only">Home</span>',
                   'onclick': '%home-click%'
                 } ]
@@ -49,10 +49,11 @@ ccm.files[ "html.js" ] = {
 
               // Help button
               {
-                'tag': 'li', 'class': 'nav-item',
+                'tag': 'li', 'class': 'nav-item', 'id': 'help',
                 'inner': [ {
                   'tag': 'a', 'href': '#', 'class': 'nav-link', 'title': 'Help', 'id': 'help',
-                  'inner': '<i class="fa fa-info-circle"></i><span class="sr-only">Help</span>'
+                  'inner': '<i class="fa fa-info-circle"></i><span class="sr-only">Help</span>',
+                  'onclick': '%help-click%'
                 } ]
               }
             ]

@@ -134,8 +134,21 @@
         async function setupNavigation( courseName ) {
           header.appendChild( $.html( self.html.navigation , {
             'course-name': courseName,
-            'course-name-click': () => { renderArticle( 'home' ) },
-            'home-click': () => { renderArticle( 'home' ) }
+            'course-name-click': () => renderArticle( 'home' ),
+            'home-click': () => {
+              const homeNavItem = header.querySelector( '#home' );
+              const helpNavItem = header.querySelector( '#help' );
+              if ( !homeNavItem.classList.contains( 'active' ) ) homeNavItem.classList.add( 'active' );
+              helpNavItem.classList.remove( 'active' );
+              renderArticle( 'home' )
+            },
+            'help-click': () => {
+              const homeNavItem = header.querySelector( '#home' );
+              const helpNavItem = header.querySelector( '#help' );
+              if ( !helpNavItem.classList.contains( 'active' ) ) helpNavItem.classList.add( 'active' );
+              homeNavItem.classList.remove( 'active' );
+              renderArticle( 'help' )
+            }
           } ) );
 
           // setup toggle button
@@ -244,6 +257,11 @@
           }
 
           switch ( pageName ) {
+            case 'help':
+              self.dataset.help_menu && self.ccm.load( self.dataset.help_menu.html )
+              .then( result => { return $.setContent( article, $.html( result ) );} )
+              .catch( exception => console.log( exception ) );
+              break;
             case 'home':
             default:
               renderHome();
